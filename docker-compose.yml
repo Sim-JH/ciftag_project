@@ -1,0 +1,68 @@
+version: '2.18.1'
+
+services:
+    module:
+        privileged: true
+        restart: always
+        image: ciftag-module
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: ciftag-module
+        env_file:
+            - docker/env/module.env
+        volumes:
+            - /mnt/ciftag/datadrive:/datadrive
+            - $PWD/ciftag:/src/module/ciftag
+#        command: supervisord -c /etc/supervisord.conf
+        environment:
+            - RUN_ON=local
+        ports:
+            - 5000:5000
+        networks:
+            - ciftag_network
+#    fargate:
+#        image: ecr
+#        privileged: true
+#        command: sh init.sh
+#        environment:
+#            - RUN_ON=aws
+#            - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+#            - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+#            - AWS_DEFAULT_REGION=ap-northeast-2
+#        deploy:
+#            replicas: 1
+    db:
+        restart: always
+        image: ciftag-postgres
+        build:
+            context: docker/db
+            dockerfile: Dockerfile
+        container_name: ciftag-postgres
+        env_file:
+            - docker/env/postgres.env
+        volumes:
+            - ciftag-db:/var/lib/postgresql/data
+        ports:
+            - 5432:5432
+        networks:
+            - ciftag_network
+    mq:
+        restart: always
+        image: ciftag-mq
+        build:
+            context: docker/mq
+            dockerfile: Dockerfile
+        container_name: ciftag-mq
+        env_file:
+            - docker/env/rabbitmq.env
+        networks:
+            - ciftag_network
+
+volumes:
+    ciftag-db:
+
+networks:
+  ciftag_network:
+    driver: bridge
+    
