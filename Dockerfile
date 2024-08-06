@@ -49,6 +49,10 @@ RUN pip install --upgrade pip setuptools
 COPY ./requirements.txt /src/module/requirements.txt
 RUN pip install -r /src/module/requirements.txt --ignore-installed
 
+# Install playwright
+RUN playwright install
+RUN playwright install-deps
+
 # Install ciftag package
 COPY . /src/module
 WORKDIR /src/module

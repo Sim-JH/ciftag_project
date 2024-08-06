@@ -1,5 +1,5 @@
 import requests
-from ciftag.config_templates.get_env import EnvKeys
+from ciftag.get_env import EnvKeys
 
 
 class Slack:

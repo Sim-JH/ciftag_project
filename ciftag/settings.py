@@ -23,6 +23,10 @@ engine: Optional[Engine] = None
 Session: Optional[SASession] = None
 
 
+def tz_converter(*args):
+    return pendulum.now(TIMEZONE).timetuple()
+
+
 def configure_vars():
     global SQL_ALCHEMY_CONN
     global RUN_ON
@@ -88,25 +92,21 @@ def initialize():
     # local/cloud 환경에 따른 env 세팅
     try:
         from ciftag.utils import logger
-
-        base_dir = os.path.dirname(__file__)
-        module_env_path = os.path.join(base_dir, "module/.env")
-
+        # configure setting
+        print('set initialize')
+        CIFTAG_HOME.mkdir(parents=True, exist_ok=True)
+        conf.read(CIFTAG_CONFIG)
         configure_vars()
 
         # local은 .env / aws는 파라미터 스토어
         if RUN_ON == "local":
+            base_dir = os.path.dirname(__file__)
+            module_env_path = os.path.join(base_dir, "module/.env")
             load_dotenv(module_env_path)
         else:
             configure_env_from_ps('ciftag')
 
-        # configure setting
-        CIFTAG_HOME.mkdir(parents=True, exist_ok=True)
-        conf_name = conf.read(CIFTAG_CONFIG)
-        print('conf: ', conf_name)
-
         # setup logger
-        logger.Logger()
         configure_orm()
 
         # terminated 시 orm dispose

@@ -1,6 +1,29 @@
 version: '2.18.1'
 
 services:
+    dev:
+        privileged: true
+        restart: always
+        image: ciftag-module
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: ciftag-dev-module
+        env_file:
+            - docker/env/module.env
+        volumes:
+            - /mnt/ciftag/datadrive:/datadrive
+            - $PWD/:/src/module/
+        #        command: supervisord -c /etc/supervisord.conf
+        environment:
+            - RUN_ON=local
+#            - RUN_ON=aws
+            - CONFIG_TYPE=dev
+        ports:
+            - 5000:5000
+        networks:
+            - ciftag_network
+
     module:
         privileged: true
         restart: always
@@ -21,6 +44,7 @@ services:
             - 5000:5000
         networks:
             - ciftag_network
+
 #    fargate:
 #        image: ecr
 #        privileged: true
