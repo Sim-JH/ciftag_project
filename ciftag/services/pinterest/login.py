@@ -1,3 +1,4 @@
+import os
 import time
 
 from ciftag.services.pinterest import PAGETYPE
@@ -15,8 +16,7 @@ def login(logs, context, uid, passwd):
             else:
                 route.abort()
         else:
-            if route.request.resource_type == "image" \
-                    or route.request.resource_type == "stylesheet" \
+            if route.request.resource_type == "stylesheet" \
                     or route.request.resource_type == "other" \
                     or route.request.resource_type == "ping" \
                     or route.request.resource_type == "font" \
@@ -34,9 +34,10 @@ def login(logs, context, uid, passwd):
             page.route('**/*', handle_route)
             page.goto('https://www.pinterest.com/login/')
             time.sleep(5)
-            page.screenshot(path=f'{logs.log_path}/goto_tmp.png')  # goto timeout 발생 체크
+            page.screenshot(path=f'{os.path.dirname(logs.log_path)}/goto_tmp.png')  # goto timeout 발생 체크
             break
         except Exception as e:
+            print('Exception', e)
             if isinstance(e, TimeoutError):
                 logs.log_data(f'{uid} {PAGETYPE} login page Timeout 진입 재시도')
             else:
@@ -49,11 +50,11 @@ def login(logs, context, uid, passwd):
         return {"result": False, "message": 'Timeout'}
 
     # 로그인 시도
-    page.fill('input[id="email"]', uid, delay=200)
-    page.fill('input[id="password"]', passwd, delay=200)
+    page.type('input[id="email"]', uid, delay=200)
+    page.type('input[id="password"]', passwd, delay=200)
     page.click('button[type="submit"]')
-
     page.wait_for_load_state("networkidle")
     page.wait_for_timeout(5000)
+    time.sleep(5)
 
     return {"result": True, "page": page}

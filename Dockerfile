@@ -24,7 +24,8 @@ RUN apt-get update && \
     libfftw3-3 \
     libxmu6 \
     libxcomposite-dev \
-    imagemagick && \
+    imagemagick \
+    x11-apps && \
     locale-gen en_US.UTF-8
 
 # Install python 3.12

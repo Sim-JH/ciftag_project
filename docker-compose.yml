@@ -14,11 +14,13 @@ services:
         volumes:
             - /mnt/ciftag/datadrive:/datadrive
             - $PWD/:/src/module/
+            -  /tmp/.X11-unix:/tmp/.X11-unix
         #        command: supervisord -c /etc/supervisord.conf
         environment:
             - RUN_ON=local
 #            - RUN_ON=aws
             - CONFIG_TYPE=dev
+            - DISPLAY=$DISPLAY
         ports:
             - 5000:5000
         networks:
