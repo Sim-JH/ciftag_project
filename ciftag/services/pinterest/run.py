@@ -28,9 +28,9 @@ def run(data: dict, headless: bool = True):
     max_pins: int = int(data['max_pins'])  # 큐 올릴 시, 목표하는 갯수를 동시에 실행될 컨테이너 만큼 균등하게 나눠서 올리기
     retry = int(data['retry']) if data.get('retry') else 1
 
-    # 특정 사이즈의 이미지 지정 시
-    desired_width = int(data['desired_width']) if data.get('desired_width') else None
-    desired_height = int(data.get('desired_height')) if data.get('desired_height') else None
+    # 이미지 크기 범위 지정 시
+    min_width = int(data['min_width']) if data.get('min_width') else None
+    max_width = int(data.get('max_width')) if data.get('max_width') else None
 
     if crypto_key := os.getenv('crypto_key'):
         ciftag_crypto = crypto.CiftagCrypto()
@@ -70,7 +70,7 @@ def run(data: dict, headless: bool = True):
 
             # 이미지 리스트 추출
             result = execute_with_logging(
-                search.search, logs, result['page'], tag, max_pins, desired_width, desired_height
+                search.search, logs, result['page'], tag, max_pins, min_width, max_width
             )
 
             # try:
@@ -88,4 +88,4 @@ def run(data: dict, headless: bool = True):
 
         except Exception as e:
             traceback_str = ''.join(traceback.format_tb(e.__traceback__))
-            logs.log_data(f"---{PAGETYPE} Exception: {uid} {traceback_str}")
+            logs.log_data(f"--- {PAGETYPE} Exception: {uid} {traceback_str}")

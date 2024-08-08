@@ -50,6 +50,7 @@ def login(logs, context, uid, passwd):
         return {"result": False, "message": 'Timeout'}
 
     # 로그인 시도
+    page.set_default_timeout(60000)  # 기본 타임 아웃을 60초로 설정
     page.type('input[id="email"]', uid, delay=200)
     page.type('input[id="password"]', passwd, delay=200)
     page.click('button[type="submit"]')
