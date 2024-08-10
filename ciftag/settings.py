@@ -12,6 +12,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.orm.session import Session as SASession
 
 from ciftag.configuration import CIFTAG_HOME, CIFTAG_CONFIG, conf
+from ciftag.get_env import EnvKeys
 from ciftag.exceptions import CIFTAGException
 
 TIMEZONE = pendulum.timezone('UTC')
@@ -22,18 +23,18 @@ RUN_ON: Optional[str] = ""
 engine: Optional[Engine] = None
 Session: Optional[SASession] = None
 
+env_key: EnvKeys
+
 
 def tz_converter(*args):
     return pendulum.now(TIMEZONE).timetuple()
 
 
 def configure_vars():
-    global SQL_ALCHEMY_CONN
     global RUN_ON
     global TIMEZONE
 
     RUN_ON = os.environ['RUN_ON']  # 해당 환경변수가 없다면 에러 대상
-    SQL_ALCHEMY_CONN = conf.get('core', 'sql_alchemy_conn')
 
     tz = conf.get('core', 'default_timezone')  # 한국 시 설정
 
@@ -62,10 +63,13 @@ def configure_env_from_ps(name='ciftag'):
                 os.environ[p[0]] = p[1].replace('"', '')
 
 
-def configure_orm():
+def configure_orm(dbase):
     logging.info('Setting up DB connection pool (PID %s)' % os.getpid())
     global engine
     global Session
+    global SQL_ALCHEMY_CONN
+
+    SQL_ALCHEMY_CONN = f"postgresql://{env_key.DB_USERNAME}:{env_key.DB_PASSWORD}@{env_key.DB_HOST}:{env_key.DB_PORT}/{dbase}"
 
     engine = create_engine(SQL_ALCHEMY_CONN, pool_size=10, max_overflow=10, pool_pre_ping=True, pool_recycle=300)
     Session = scoped_session(
@@ -89,9 +93,9 @@ def dispose_orm():
 
 
 def initialize():
+    global env_key
     # local/cloud 환경에 따른 env 세팅
     try:
-        from ciftag.utils import logger
         # configure setting
         print('set initialize')
         CIFTAG_HOME.mkdir(parents=True, exist_ok=True)
@@ -101,13 +105,16 @@ def initialize():
         # local은 .env / aws는 파라미터 스토어
         if RUN_ON == "local":
             base_dir = os.path.dirname(__file__)
-            module_env_path = os.path.join(base_dir, "module/.env")
+            module_env_path = os.path.join(base_dir, "config_templates/.env")
             load_dotenv(module_env_path)
         else:
             configure_env_from_ps('ciftag')
 
-        # setup logger
-        configure_orm()
+        # set env key
+        env_key = EnvKeys()
+
+        # setup orm
+        configure_orm(os.getenv('SERVER_TYPE', 'product'))
 
         # terminated 시 orm dispose
         atexit.register(dispose_orm)

@@ -2,16 +2,14 @@ et -e
 set -u
 
 # postgres compose 시, multiple db 자동 생성
-if [ -n "$POSTGRES_MULTIPLE_DATABASES" ]; then
-	echo "Multiple database creation requested: $POSTGRES_MULTIPLE_DATABASES"
-	for db in $(echo $POSTGRES_MULTIPLE_DATABASES | tr ',' ' '); do
-		create_user_and_database $db
-	done
-	echo "Multiple databases created"
-	for db in $(echo $POSTGRES_MULTIPLE_DATABASES | tr ',' ' '); do
-		set_disk_info $db
-	done
-fi
+function create_user_and_database() {
+	local database=$1
+	echo "  Creating database '$database'"
+	psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" <<-EOSQL
+    SELECT 'CREATE DATABASE $database'
+    WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname='$database')\gexec
+EOSQL
+}
 
 # docker 내/외부 디스크 용량 조회
 function set_disk_info() {
@@ -29,4 +27,16 @@ function set_disk_info() {
     LANGUAGE plpgsql
 EOSQL
 }
+
+if [ -n "$POSTGRES_MULTIPLE_DATABASES" ]; then
+	echo "Multiple database creation requested: $POSTGRES_MULTIPLE_DATABASES"
+	for db in $(echo $POSTGRES_MULTIPLE_DATABASES | tr ',' ' '); do
+		create_user_and_database $db
+	done
+	echo "Multiple databases created"
+	for db in $(echo $POSTGRES_MULTIPLE_DATABASES | tr ',' ' '); do
+		set_disk_info $db
+	done
+fi
+
 

@@ -4,27 +4,27 @@ import json
 
 class EnvKeys:
     """local/ecs 통합 env 파싱"""
-    # aws 관련
-    S3_URI: str = os.getenv("S3_URI", None)
-    S3_KEY: str = os.getenv("S3_KEY", None)
-    S3_SECRET: str = os.getenv("S3_SECRET", None)
-    SQS_URI: str = os.getenv("SQS_URI", None)
+    def __init__(self):
+        # aws 관련
+        self.S3_URI: str = os.getenv("S3_URI", None)
+        self.S3_KEY: str = os.getenv("S3_KEY", None)
+        self.S3_SECRET: str = os.getenv("S3_SECRET", None)
+        self.SQS_URI: str = os.getenv("SQS_URI", None)
 
-    # redis 관련
-    REDIS_HOST: str = os.getenv("REDIS_HOST", None)
-    REDIS_PORT: int = int(os.getenv("REDIS_PORT", 6379))
-    REDIS_LOCK_WAITING: int = int(os.getenv("REDIS_LOCK_WAITING", 120))
-    REDIS_LOCK_BOUNDARY: int = int(os.getenv("REDIS_LOCK_BOUNDARY", 20))
+        # region 비용 관련 문제로 아래 설정은 로컬/ecs 이원화
+        # redis 관련
+        self.REDIS_HOST: str = os.getenv("REDIS_HOST", None)
+        self.REDIS_PORT: int = int(os.getenv("REDIS_PORT", 6379))
+        self.REDIS_LOCK_WAITING: int = int(os.getenv("REDIS_LOCK_WAITING", 120))
+        self.REDIS_LOCK_BOUNDARY: int = int(os.getenv("REDIS_LOCK_BOUNDARY", 20))
 
-    # local 관련
+        # db 관련
+        self.DB_HOST: str = os.getenv("DB_HOST", "localhost")
+        self.DB_PORT: int = int(os.getenv("DB_PORT", 3306))
+        self.DB_USERNAME: str = os.getenv("DB_USERNAME", None)
+        self.DB_PASSWORD: str = os.getenv("DB_PASSWORD", None)
+        # endregion
 
-    # db 관련
-    DB_HOST: str = os.getenv("RDB_HOST", "localhost")
-    DB_PORT: int = int(os.getenv("RDB_PORT", 3306))
-    DB_USERNAME: str = os.getenv("RDB_USERNAME", None)
-    DB_PASSWORD: str = os.getenv("RDB_PASSWORD", None)
-
-    # slack 관련
-    SLACK_URI: str = os.getenv("SLACK_URI", None)
-    SLACK_URI_NOTICE: str = os.getenv("SLACK_URI_NOTICE", None)
-
+        # slack 관련
+        self.SLACK_URI: str = os.getenv("SLACK_URI", None)
+        self.SLACK_URI_NOTICE: str = os.getenv("SLACK_URI_NOTICE", None)

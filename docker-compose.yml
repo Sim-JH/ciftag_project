@@ -13,39 +13,39 @@ services:
             - docker/env/module.env
         volumes:
             - /mnt/ciftag/datadrive:/datadrive
-            - $PWD/:/src/module/
-            -  /tmp/.X11-unix:/tmp/.X11-unix
-        #        command: supervisord -c /etc/supervisord.conf
+            - $PWD/ciftag:/src/module/ciftag
+            - /tmp/.X11-unix:/tmp/.X11-unix
         environment:
             - RUN_ON=local
-#            - RUN_ON=aws
-            - CONFIG_TYPE=dev
+            - SERVER_TYPE=dev
             - DISPLAY=$DISPLAY
+        command: supervisord -c /etc/supervisord.conf
         ports:
             - 5000:5000
+            - 5555:5555
         networks:
             - ciftag_network
 
-    module:
-        privileged: true
-        restart: always
-        image: ciftag-module
-        build:
-            context: .
-            dockerfile: Dockerfile
-        container_name: ciftag-module
-        env_file:
-            - docker/env/module.env
-        volumes:
-            - /mnt/ciftag/datadrive:/datadrive
-            - $PWD/ciftag:/src/module/ciftag
+#    module:
+#        privileged: true
+#        restart: always
+#        image: ciftag-module
+#        build:
+#            context: .
+#            dockerfile: Dockerfile
+#        container_name: ciftag-module
+#        env_file:
+#            - docker/env/module.env
+#        volumes:
+#            - /mnt/ciftag/datadrive:/datadrive
+#            - $PWD/ciftag:/src/module/ciftag
+#        environment:
+#            - RUN_ON=local
 #        command: supervisord -c /etc/supervisord.conf
-        environment:
-            - RUN_ON=local
-        ports:
-            - 5000:5000
-        networks:
-            - ciftag_network
+#        ports:
+#            - 5000:5000
+#        networks:
+#            - ciftag_network
 
 #    fargate:
 #        image: ecr
@@ -80,8 +80,10 @@ services:
             context: docker/mq
             dockerfile: Dockerfile
         container_name: ciftag-mq
+        ports:
+            - 6379:6379
         env_file:
-            - docker/env/rabbitmq.env
+            - docker/env/redis.env
         networks:
             - ciftag_network
 

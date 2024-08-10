@@ -1,18 +1,19 @@
 from celery import Celery
 from celery.schedules import crontab
 
-from ciftag.settings import SQL_ALCHEMY_CONN, conf
+from ciftag.settings import SQL_ALCHEMY_CONN, env_key
 
-celery_app = Celery(
+app = Celery(
     "ciftag",
-    broker=conf.get('celery', 'broker'),
+    broker=f"redis://{env_key.REDIS_HOST}:{env_key.REDIS_PORT}/0",
     # backend="rpc://",
     backend="db+" + SQL_ALCHEMY_CONN,
     include=[
+        "ciftag.tasks.pinterest"
     ],
 )
 
-celery_app.conf.update(
+app.conf.update(
     task_serializer="json",
     accept_content=['json'],
     result_serializer="json",

@@ -7,7 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG en_US.UTF-8
 ENV LC_ALL en_US.UTF-8
 
-# base pkg
+# Base pkg
 RUN apt-get update && \
     apt-get install --no-install-recommends -y --quiet \
     apt-utils \
@@ -54,14 +54,19 @@ RUN pip install -r /src/module/requirements.txt --ignore-installed
 RUN playwright install
 RUN playwright install-deps
 
+# Install supervisor
+RUN pip install supervisor==4.2.5
+COPY ./supervisord.conf /etc/supervisord.conf
+
 # Install ciftag package
 COPY . /src/module
 WORKDIR /src/module
 RUN pip install -e .
 
-# image dsize
+# Set supervisor
+RUN mkdir -p /src/module/logs/supervisord && \
+    touch /src/module/logs/supervisord/supervisor.log
+
+# Dsize image
 RUN apt-get clean && \
     rm -rf /var/lib/apt/lists/*
-
-# RUN mkdir -p /src/module/logs/supervisord
-# RUN cat > /src/module/logs/supervisord/supervisor.log

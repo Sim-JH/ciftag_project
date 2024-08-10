@@ -53,10 +53,10 @@ CIFTAG_HOME = Path(os.environ['CIFTAG_HOME'])
 CIFTAG_RAW = Path("/datadrive")
 
 # product/dev/test
-if "CONFIG_TYPE" not in os.environ:
+if "SERVER_TYPE" not in os.environ:
     CIFTAG_CONFIG = CIFTAG_HOME / "ciftag_product.cfg"
 else:
-    CIFTAG_CONFIG = CIFTAG_HOME / f"ciftag_{os.environ['CONFIG_TYPE']}.cfg"
+    CIFTAG_CONFIG = CIFTAG_HOME / f"ciftag_{os.environ['SERVER_TYPE']}.cfg"
 
 if not CIFTAG_CONFIG.is_file() or CIFTAG_CONFIG.stat().st_size == 0:
     """
