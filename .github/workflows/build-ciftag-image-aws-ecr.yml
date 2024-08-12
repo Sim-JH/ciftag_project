@@ -1,0 +1,53 @@
+name: build-ciftag-image-aws-ecr
+
+on:
+  workflow_dispatch:
+  # branch push 시 자동 빌드
+#  push:
+#    branches: [ "main" ]
+#    paths-ignore:
+#      - '.github/**' # 특정 폴더를 제외하고 모든 변경 사항을 감지
+permissions:
+  contents: read
+
+
+jobs:
+  build:
+    name: 'build-ciftag-image-aws-ecr'
+    runs-on: ubuntu-latest
+
+    # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1-node16
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ap-northeast-2
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: main Environment Docker build & Push Docker image to Amazon ECR
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        push: true
+        tags: |
+          617204753570.dkr.ecr.ap-northeast-2.amazonaws.com/ciftag-server:latest
+        # docker build 캐시 저장 설정
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        # dockerfile ARG 전달 필요시
+        #  build-args:
