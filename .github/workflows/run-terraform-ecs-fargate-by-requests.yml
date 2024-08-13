@@ -1,0 +1,73 @@
+name: 'run-terraform-ecs-fargate-by-requests'
+
+on:
+  workflow_dispatch:
+    inputs:
+      server_type:
+        description: 'server_type'
+        required: true
+        type: string
+      run_type:
+        description: 'run_type'
+        required: true
+        type: string
+
+
+env:
+  ECS_COUNT_CIFTAG: 1
+
+jobs:
+  terraform:
+    name: 'ciftag-consumer'
+    runs-on: ubuntu-latest
+
+    env:
+      # TODO server_type별 terraform 분리 시, working-directory를 server_type 기반 설정
+      working-directory: ./terraform/product
+    environment: consumer
+
+    # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+    # Checkout the repository to the GitHub Actions runner
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1-node16
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ap-northeast-2
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+      # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
+    - name: Terraform Init
+      run: terraform init
+      working-directory: ${{ env.working-directory }}
+
+    # Checks that all Terraform configuration files adhere to a canonical format
+    - name: Terraform Format
+      run: terraform fmt -check -diff
+      working-directory: ${{ env.working-directory }}
+
+    # Generates an execution plan for Terraform
+    - name: Terraform Plan
+      run: terraform plan
+      working-directory: ${{ env.working-directory }}
+
+      # On push to "main", build or change infrastructure according to Terraform configuration files
+      # Note: It is recommended to set up a required "strict" status check in your repository for "Terraform Cloud". See the documentation on "strict" required status checks for more information: https://help.github.com/en/github/administering-a-repository/types-of-required-status-checks
+    - name: Terraform Apply Ciftag
+      env:
+        # TODO requests 통해서 전달
+        SERVER_TYPE: ${{ github.event.inputs.server_type || 'dev' }}  # 현재 test용 dev 설정
+        RUN_TYPE: ${{ github.event.inputs.run_type || 'pinterest' }}
+      run: bash terraform_for_ciftag.sh
+      working-directory: ${{ env.working-directory }}
