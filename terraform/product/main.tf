@@ -90,6 +90,10 @@ module "ecs_service_ciftag_product" {
           "name" : "SERVER_TYPE",
           "value" : var.server_type
         }
+        {
+          "name" : "RUN_TYPE",
+          "value" : var.run_type
+        }
       ]
 
       secrets = [

@@ -43,6 +43,7 @@ jobs:
       uses: docker/build-push-action@v2
       with:
         context: .
+        file: ./docker/ecr/Dockerfile
         push: true
         tags: |
           617204753570.dkr.ecr.ap-northeast-2.amazonaws.com/ciftag-server:latest

@@ -5,15 +5,21 @@ variable "desired_count_tasks_fargate_ciftag" {
 }
 
 variable "run_on" {
-  description = "Number of instances of the task definition to place and keep running. Defaults to `0`"
+  description = "Run default aws"
   type        = string
   default     = "aws"
 }
 
 variable "server_type" {
-  description = "Number of instances of the task definition to place and keep running. Defaults to `0`"
+  description = "Set Server Configuration"
   type        = string
-  default     = "run"
+  default     = "product"
+}
+
+variable "run_type" {
+  description = "Crawl Run Type"
+  type        = string
+  default     = "pinterest"
 }
 
 variable "init_count_fargate_ciftag" {
