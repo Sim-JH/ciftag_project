@@ -19,6 +19,7 @@ TIMEZONE = pendulum.timezone('UTC')
 
 SQL_ALCHEMY_CONN: Optional[str] = ""
 RUN_ON: Optional[str] = ""
+SERVER_TYPE: Optional[str] = ""
 
 engine: Optional[Engine] = None
 Session: Optional[SASession] = None
@@ -32,9 +33,12 @@ def tz_converter(*args):
 
 def configure_vars():
     global RUN_ON
+    global SERVER_TYPE
     global TIMEZONE
 
-    RUN_ON = os.environ['RUN_ON']  # 해당 환경변수가 없다면 에러 대상
+    # 해당 환경변수들이 없다면 에러 대상
+    RUN_ON = os.environ['RUN_ON']
+    SERVER_TYPE = os.environ['SERVER_TYPE']
 
     tz = conf.get('core', 'default_timezone')  # 한국 시 설정
 
@@ -71,6 +75,7 @@ def configure_orm(dbase):
 
     SQL_ALCHEMY_CONN = f"postgresql://{env_key.DB_USERNAME}:{env_key.DB_PASSWORD}@{env_key.DB_HOST}:{env_key.DB_PORT}/{dbase}"
 
+    # engine의 경우 pool_size/max_overflow 옵션의 증가 여부에 따라 orm과 쿼리용 분리할 필요가 생길수도 있음.
     engine = create_engine(SQL_ALCHEMY_CONN, pool_size=10, max_overflow=10, pool_pre_ping=True, pool_recycle=300)
     Session = scoped_session(
         sessionmaker(
@@ -114,7 +119,7 @@ def initialize():
         env_key = EnvKeys()
 
         # setup orm
-        configure_orm(os.getenv('SERVER_TYPE', 'product'))
+        configure_orm(SERVER_TYPE)
 
         # terminated 시 orm dispose
         atexit.register(dispose_orm)

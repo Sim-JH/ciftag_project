@@ -9,7 +9,11 @@ class EnvKeys:
         self.S3_URI: str = os.getenv("S3_URI", None)
         self.S3_KEY: str = os.getenv("S3_KEY", None)
         self.S3_SECRET: str = os.getenv("S3_SECRET", None)
+
         self.SQS_URI: str = os.getenv("SQS_URI", None)
+        self.SQS_DEV_URI: str = os.getenv("SQS_DEV_URI", None)
+        self.SQS_KEY: str = os.getenv("SQS_KEY", None)
+        self.SQS_SECRET: str = os.getenv("SQS_SECRET", None)
 
         # region 비용 관련 문제로 아래 설정은 로컬/ecs 이원화
         # redis 관련
