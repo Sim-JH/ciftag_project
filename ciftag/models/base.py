@@ -7,7 +7,7 @@ from ciftag.settings import TIMEZONE
 Base = declarative_base()
 
 
-class TimestampMixin(object):
+class TimestampMixin:
     created_at = Column(
         DateTime(timezone=True), default=func.now().astimezone(TIMEZONE)
     )

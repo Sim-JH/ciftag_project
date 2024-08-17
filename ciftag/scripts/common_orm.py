@@ -4,8 +4,8 @@ from sqlalchemy import column
 from sqlalchemy.dialects.postgresql import insert
 
 from ciftag.models import Base
-from ciftag.utils.database import DBManager
-from ciftag.exceptions import CIFTAGAPIException
+from ciftag.integrations.database import DBManager
+from ciftag.exceptions import CiftagAPIException
 
 
 dbm = DBManager()
@@ -31,7 +31,7 @@ def search_orm(model: Base, key: str, value: Any, col=None, target='all') -> Lis
     table_key = getattr(model, key)
 
     if not table_key:
-        raise CIFTAGAPIException(f"Resource {key} not found", 404)
+        raise CiftagAPIException(f"Resource {key} not found", 404)
 
     with dbm.create_session() as session:
         query = session.query(
@@ -55,7 +55,7 @@ def put_orm(model: Base, key: str, value: Any, body) -> List[Base]:
     table_key = getattr(model, key)
 
     if not table_key:
-        raise CIFTAGAPIException(f"Resource {key} not found", 404)
+        raise CiftagAPIException(f"Resource {key} not found", 404)
 
     with dbm.create_session() as session:
         records = (
@@ -70,7 +70,7 @@ def delete_orm(model: Base, key: str, value: Any) -> List[Base]:
     table_key = getattr(model, key)
 
     if not table_key:
-        raise CIFTAGAPIException(f"Resource {key} not found", 404)
+        raise CiftagAPIException(f"Resource {key} not found", 404)
 
     with dbm.create_session() as session:
         records = (

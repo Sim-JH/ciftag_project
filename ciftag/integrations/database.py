@@ -1,12 +1,11 @@
 import time
 import contextlib
 
-from sqlalchemy import text
 from sqlalchemy.orm import scoped_session
 
 import ciftag.utils.logger as logger
 from ciftag.settings import engine, Session
-from ciftag.utils.redis_lock import RedisManager
+from ciftag.integrations.redis_lock import RedisManager
 
 
 logs = logger.Logger()

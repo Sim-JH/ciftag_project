@@ -2,9 +2,7 @@ import os
 import time
 import logging
 
-import pendulum
-
-from ciftag.utils.slack import Slack
+from ciftag.integrations.slack import Slack
 from ciftag.configuration import conf
 from ciftag.settings import tz_converter
 

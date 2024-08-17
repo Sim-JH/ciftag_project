@@ -1,4 +1,4 @@
-from ciftag.utils.database import DBManager
+from ciftag.integrations.database import DBManager
 
 dbm = DBManager()
 

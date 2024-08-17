@@ -1,7 +1,7 @@
 from cryptography.fernet import Fernet
 
 
-class CiftagCrypto(object):
+class CiftagCrypto:
     def __init__(self):
         self.cipher_suite = None
 
