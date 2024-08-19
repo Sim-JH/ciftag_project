@@ -29,7 +29,9 @@ class CrawlTargetCode(Enum):
     danbooru = "2"
 
 
-class CrawlResultCode(Enum):
-    all = "0"
-    partial = "1"
+class CrawlStatusCode(Enum):
+    load = "0"
+    success = "1"
     failed = "2"
+    download = "3"
+    end = "4"

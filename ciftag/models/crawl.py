@@ -1,7 +1,7 @@
 from sqlalchemy import Column,  ForeignKey, Integer, String, Enum, Time
 
 from ciftag.models.base import Base, TimestampMixin
-from ciftag.models.enums import RunOnCode, CrawlTargetCode, CrawlResultCode
+from ciftag.models.enums import RunOnCode, CrawlTargetCode, CrawlStatusCode
 
 
 class CrawlRequestInfo(Base, TimestampMixin):
@@ -19,7 +19,7 @@ class CrawlRequestInfo(Base, TimestampMixin):
         ForeignKey("cred_info.id", onupdate="CASCADE"),
     )  # 인증 정보 ID (FK)
     target_code = Column(Enum(CrawlTargetCode))  # 대상 사이트 코드
-    result_code = Column(Enum(CrawlResultCode))  # 수행 결과 코드
+    result_code = Column(Enum(CrawlStatusCode))  # 수행 결과 코드
     run_on = Column(Enum(RunOnCode))  # 수행한 환경
     tags = Column(String)  # 크롤링 대상 태그 "tag/tag/tag" 로 구분
     cnt = Column(Integer)  # 목표 이미지 갯수
