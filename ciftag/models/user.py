@@ -1,7 +1,7 @@
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Enum
 
 from ciftag.models.base import Base, TimestampMixin
-from ciftag.models.enums import UserRole, StatusCode, HistoryCode
+from ciftag.models.enums import UserRoleCode, StatusCode, HistoryCode
 
 
 # 로그인 기능은 현재 껍데기만 구현
@@ -14,8 +14,8 @@ class UserInfo(Base, TimestampMixin):
     user_id = Column(String, unique=True)  # 사용자 ID
     user_pw = Column(String)  # 사용자 PW
     user_name = Column(String)  # 사용자 이름
-    auth = Column(Enum(UserRole))  # 사용자 권한
-    status = Column(Enum(StatusCode))  # 사용자 권한
+    auth_code = Column(Enum(UserRoleCode))  # 사용자 권한 코드
+    status_code = Column(Enum(StatusCode))  # 계정 상태 코드
     last_connected_at = Column(DateTime(timezone=True), nullable=True, default=TimestampMixin.created_at.default.arg)  # 마지막 접속
     etc = Column(String, nullable=True)
 
@@ -30,5 +30,5 @@ class UserHistClass(Base, TimestampMixin):
         Integer,
         ForeignKey("user_info.id", onupdate="CASCADE"),
     )  # 사용자 정보 ID (FK)
-    hist_cd = Column(Enum(HistoryCode))  # 이력 코드
+    hist_code = Column(Enum(HistoryCode))  # 이력 코드
     etc = Column(String, nullable=True)

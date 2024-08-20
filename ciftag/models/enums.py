@@ -19,7 +19,7 @@ class HistoryCode(Enum):
     login = "3"
 
 
-class UserRole(Enum):
+class UserRoleCode(Enum):
     admin = "0"
     user = "1"
 

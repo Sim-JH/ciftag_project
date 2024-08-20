@@ -25,6 +25,11 @@ services:
             - 5555:5555
         networks:
             - ciftag_network
+        depends_on:
+            mq:
+                condition: service_healthy
+            db:
+                condition: service_healthy
 
 #    module:
 #        privileged: true
@@ -73,6 +78,11 @@ services:
             - 5432:5432
         networks:
             - ciftag_network
+        healthcheck:
+            test: [ "CMD-SHELL", "pg_isready -U admin" ]
+            interval: 10s
+            timeout: 5s
+            retries: 5
     mq:
         restart: always
         image: ciftag-mq
@@ -86,9 +96,15 @@ services:
             - docker/env/redis.env
         networks:
             - ciftag_network
+        healthcheck:
+            test: [ "CMD", "redis-cli", "ping" ]
+            interval: 10s
+            timeout: 5s
+            retries: 5
 
 volumes:
     ciftag-db:
+        name: ciftag-db
 
 networks:
   ciftag_network:

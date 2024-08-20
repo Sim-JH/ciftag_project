@@ -13,7 +13,7 @@ from sqlalchemy.orm.session import Session as SASession
 
 from ciftag.configuration import CIFTAG_HOME, CIFTAG_CONFIG, conf
 from ciftag.get_env import EnvKeys
-from ciftag.exceptions import CIFTAGException
+from ciftag.exceptions import CiftagException
 
 TIMEZONE = pendulum.timezone('UTC')
 
@@ -125,4 +125,4 @@ def initialize():
         atexit.register(dispose_orm)
 
     except Exception:
-        raise CIFTAGException('Fail on initialize')
+        raise CiftagException('Fail on initialize')

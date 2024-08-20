@@ -22,7 +22,7 @@ async def get_pinterest_result(
 
 @router.get("/img/{result_pk}", response_model=List[PinterestCrawlData])
 async def get_pinterest_img(
-    pinterest_pk: int = Path(default=0, title="핀터레스트 결과 id", description="0입력 시 전체 조회"),
+    pinterest_pk: int = Path(title="핀터레스트 결과 id", description="0입력 시 전체 조회"),
     min_height: Union[str, None] = Query(default=None, title="조회할 이미지 최소 높이"),
     max_height: Union[str, None] = Query(default=None, title="조회할 이미지 최대 높이"),
     min_width: Union[str, None] = Query(default=None, title="조회할 이미지 최소 너비"),
@@ -34,7 +34,7 @@ async def get_pinterest_img(
 
 @router.get("/thum/{img_pk}",  response_class=FileResponse)
 async def get_pinterest_thumnail(
-    img_pk: int = Path(default=1, gt=0, title="핀터레스트 이미지 id", description="download가 True인 이미지만 가능"),
+    img_pk: int = Path(gt=0, title="핀터레스트 이미지 id", description="download가 True인 이미지만 가능"),
 ):
     """이미지 썸네일 확인"""
     # TODO download가 성공한 id만 가능

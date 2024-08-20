@@ -9,13 +9,12 @@ from ciftag.web.schemas.crawl import (
     CrawlResponseBase
 )
 
-
 router = APIRouter()
 
 
 @router.get("/{crawl_pk}", response_model=List[CrawlResponseBase])
 async def get_crawl_list(
-    crawl_pk: int = Path(default=0, title="크롤링 요청 id", description="0입력 시 전체 조회"),
+    crawl_pk: int = Path(title="크롤링 요청 id", description="0입력 시 전체 조회"),
     user_pk: Union[int, None] = Query(default=None, title="조회할 사용자 id"),
     cred_pk: Union[int, None] = Query(default=None, title="조회할 인증 id"),
     target_code: Union[str, None] = Query(default=None, title="조회할 크롤링 대상 사이트"),
@@ -28,15 +27,12 @@ async def get_crawl_list(
 
 
 @router.post("/", response_model=int)
-def post_crawl_list(
-    request: CrawlRequestBase,
-    min_height: Union[str, None] = Body(default=None, title="이미지 최소 높이"),
-    max_height: Union[str, None] = Body(default=None, title="이미지 최대 높이"),
-    min_width: Union[str, None] = Body(default=None, title="이미지 최소 너비"),
-    max_width: Union[str, None] = Body(default=None, title="이미지 최대 너비"),
+def post_crawl_image(
+    request: CrawlRequestBase
 ):
     """크롤링 요청"""
     # TODO min_height/max_height/min_width/max_width는 비고로
+    # TODO target_codesms 여러개 가능
     # TODO celery 큐 실행만 시킬 예정이므로 동기적으로
     # limit_request(user_pk)  # TODO to many request 구현하기
     pass  # return crawl id

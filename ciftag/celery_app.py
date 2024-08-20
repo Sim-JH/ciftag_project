@@ -8,6 +8,7 @@ app = Celery(
     broker=f"redis://{env_key.REDIS_HOST}:{env_key.REDIS_PORT}/0",
     # backend="rpc://",
     backend="db+" + SQL_ALCHEMY_CONN,
+    broker_connection_retry_on_startup=True,  # 시작시 브로커 연결 재시도 제어 여부
     include=[
         "ciftag.tasks.pinterest"
     ],

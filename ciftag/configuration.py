@@ -3,7 +3,7 @@ from configparser import ConfigParser
 from pathlib import Path
 from typing import Optional
 
-from ciftag.exceptions import CIFTAGException
+from ciftag.exceptions import CiftagException
 
 base_dir = os.path.dirname(__file__)
 template_dir = os.path.join(base_dir, 'config_templates')
@@ -29,7 +29,7 @@ class CiftagConfigParser(ConfigParser):
         try:
             return super().get(section, key, **kwargs)
         except Exception:
-            raise CIFTAGException(
+            raise CiftagException(
                 f'section/key [{section}/{key}] not found in config'
             )
 
@@ -40,7 +40,7 @@ class CiftagConfigParser(ConfigParser):
         elif val in ['false', 'no']:
             return False
         else:
-            raise CIFTAGException('Not a boolean')
+            raise CiftagException('Not a boolean')
 
     def getint(self, section, key) -> int:
         return int(self.get(section, key))

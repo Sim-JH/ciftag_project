@@ -6,6 +6,6 @@ setup(
     author="sjh",
     version="0.1.0",
     packages=find_packages(include=['ciftag']),
-    # scripts=['ciftag/bin/ciftag'],
+    scripts=['ciftag/bin/ciftag'],
     include_package_data=True,
 )

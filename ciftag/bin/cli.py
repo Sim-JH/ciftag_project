@@ -1,3 +1,4 @@
+import sys
 import time
 import argparse
 
@@ -10,7 +11,7 @@ from ciftag.web.app import create_app
 from ciftag.configuration import conf
 
 
-logs = logger.Logger()
+logs = logger.Logger(log_dir='CLI')
 
 
 def initdb(args):
@@ -32,14 +33,15 @@ def start_api_server(args):
                 logs.log_data(f"Trying agains in 10 seconds... {cnt}")
                 time.sleep(10)
 
-    if args.develop:
-        app = create_app(debug=True)
-    else:
-        app = create_app()
-
     host = conf.get("web", "api_host")
     port = conf.get("web", "api_port")
-    uvicorn.run(app, host=host, port=port)
+
+    if args.develop:
+        uvicorn.run('ciftag.web.app:create_app', host=host, port=int(port), reload=True)
+    else:
+        app = create_app(False)
+        uvicorn.run(app, host=host, port=int(port))
+
 
 class CiftagParser:
     """cli args 파싱 및 해당 작업 호출"""
@@ -89,3 +91,27 @@ class CiftagParser:
         parser.set_defaults(func=start_api_server)
 
         return parser
+
+    def parse_args(self):
+        """bin parser"""
+        args = self.parser.parse_args(sys.argv[1:2])
+
+        if not hasattr(self, args.command):
+            print("Unrecognized command")
+            self.parser.print_help()
+            self.parser.exit()
+
+        subparser = getattr(self, args.command)()
+        try:
+            args = subparser.parse_args(sys.argv[2:])
+        except TypeError as e:
+            logs.log_data(f"TypeError on bin parser {e}")
+            subparser.print_help()
+            subparser.exit()
+
+        try:
+            args.func(args)
+        except AttributeError as e:
+            logs.log_data(f"AttributeError on bin parser {e}")
+            subparser.print_help()
+            subparser.exit()

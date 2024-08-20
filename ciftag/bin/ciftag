@@ -1,0 +1,8 @@
+#!/usr/bin/env python3
+from ciftag.bin.cli import CiftagParser
+
+
+if __name__ == "__main__":
+    # parsing arguments 등록
+    parser = CiftagParser()
+    parser.parse_args()

@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy import Column, DateTime, Integer, String, Boolean, Enum
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
@@ -11,16 +13,16 @@ Base = declarative_base()
 class TimestampMixin:
     """시간 데이터 기본 폼"""
     created_at = Column(
-        DateTime(timezone=True), default=func.now().astimezone(TIMEZONE)
+        DateTime(timezone=True), default=lambda: datetime.now(TIMEZONE)
     )
     updated_at = Column(
         DateTime(timezone=True),
-        default=func.now().astimezone(TIMEZONE),
-        onupdate=func.now().astimezone(TIMEZONE)
+        default=lambda: datetime.now(TIMEZONE),
+        onupdate=lambda: datetime.now(TIMEZONE)
     )
 
 
-class ImgDataBase(Base, TimestampMixin):
+class ImgDataImgDataMixin(TimestampMixin):
     """이미지 데이터 기본 폼
     경로는 local/aws로 download한 이미지들을 통합 보관하는 최종 경로
     """
