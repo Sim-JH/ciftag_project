@@ -7,8 +7,8 @@ from ciftag.models import enums
 
 
 class CrawlBase(BaseModel):
-    user_pk: int = Field(None, title="사용자 pk")
-    cred_pk: int = Field(None, title="인증 정보 pk")
+    user_pk: int = Field(None, gt=0, title="사용자 pk")
+    cred_pk: int = Field(None, gt=0, title="인증 정보 pk")
     target_code: List[enums.CrawlTargetCode] = Field(
         "1",
         title="크롤링 대상 사이트 코드",
@@ -44,5 +44,5 @@ class CrawlResponseBase(CrawlBase):
     etc: Optional[str] = Field(None, title="비고")  # nullable
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 

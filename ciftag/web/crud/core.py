@@ -1,6 +1,6 @@
-from typing import Any, List, Dict, Tuple
+from typing import Any, List, Dict, Tuple, Union
 
-from sqlalchemy import column
+from sqlalchemy import column,  asc, desc
 from sqlalchemy.dialects.postgresql import insert
 
 from ciftag.models import Base
@@ -11,10 +11,18 @@ from ciftag.exceptions import CiftagAPIException
 dbm = DBManager()
 
 
-def select_orm(model: Base, target='all') -> List[Base]:
+def select_orm(
+        model: Base, target='all', order_by: str = 'created_at', order_direction: str = 'asc'
+) -> Union[List[Base] | Base | None]:
     """ 모델 조회 쿼리 """
     with dbm.create_session() as session:
         query = session.query(model)
+
+        order_column = getattr(model, order_by)
+        if order_direction == 'asc':
+            query = query.order_by(asc(order_column))
+        else:
+            query = query.order_by(desc(order_column))
 
         if target == "all":
             records = query.all()
@@ -26,7 +34,15 @@ def select_orm(model: Base, target='all') -> List[Base]:
     return records
 
 
-def search_orm(model: Base, key: str, value: Any, col=None, target='all') -> List[Base]:
+def search_orm(
+        model: Base,
+        key: str,
+        value: Any,
+        col=None,
+        target='all',
+        order_by: str = 'created_at',
+        order_direction: str = 'asc'
+) -> Union[List[Base] | Base | None]:
     """모델 key 기반 검색"""
     table_key = getattr(model, key)
 
@@ -40,6 +56,12 @@ def search_orm(model: Base, key: str, value: Any, col=None, target='all') -> Lis
             table_key == value
         )
 
+        order_column = getattr(model, order_by)
+        if order_direction == 'asc':
+            query = query.order_by(asc(order_column))
+        else:
+            query = query.order_by(desc(order_column))
+
         if target == "all":
             records = query.all()
         elif target == "scalar":
@@ -50,7 +72,17 @@ def search_orm(model: Base, key: str, value: Any, col=None, target='all') -> Lis
     return records
 
 
-def put_orm(model: Base, key: str, value: Any, body) -> List[Base]:
+def insert_orm(model: Base, body) -> Base:
+    """모델 key 기반 record update"""
+    record = model(**body.dict())
+
+    with dbm.create_session() as session:
+        session.add(record)
+
+    return record
+
+
+def update_orm(model: Base, key: str, value: Any, body) -> Base:
     """모델 key 기반 record update"""
     table_key = getattr(model, key)
 
@@ -58,14 +90,12 @@ def put_orm(model: Base, key: str, value: Any, body) -> List[Base]:
         raise CiftagAPIException(f"Resource {key} not found", 404)
 
     with dbm.create_session() as session:
-        records = (
-            session.query(model).filter(table_key == value).update(body)
-        )
+        record = session.query(model).filter(table_key == value).update(body.dict())
 
-    return records
+    return record
 
 
-def delete_orm(model: Base, key: str, value: Any) -> List[Base]:
+def delete_orm(model: Base, key: str, value: Any) -> Base:
     """모델 key 기반 record delete"""
     table_key = getattr(model, key)
 
@@ -73,11 +103,9 @@ def delete_orm(model: Base, key: str, value: Any) -> List[Base]:
         raise CiftagAPIException(f"Resource {key} not found", 404)
 
     with dbm.create_session() as session:
-        records = (
-            session.query(model).filter(table_key == value).delete()
-        )
+        record = session.query(model).filter(table_key == value).delete()
 
-    return records
+    return record
 
 
 def upsert_orm(model: Base, data_set: Dict[str, Any], constraint: Any, returning=None) -> Tuple[int, bool]:

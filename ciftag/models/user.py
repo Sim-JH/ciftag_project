@@ -16,7 +16,7 @@ class UserInfo(Base, TimestampMixin):
     user_name = Column(String)  # 사용자 이름
     auth_code = Column(Enum(UserRoleCode))  # 사용자 권한 코드
     status_code = Column(Enum(StatusCode))  # 계정 상태 코드
-    last_connected_at = Column(DateTime(timezone=True), nullable=True, default=TimestampMixin.created_at.default.arg)  # 마지막 접속
+    last_connected_at = Column(DateTime(timezone=True), nullable=True)  # 마지막 접속
     etc = Column(String, nullable=True)
 
 

@@ -19,6 +19,6 @@ class CredentialInfo(Base, TimestampMixin):
     cred_pw = Column(String)  # 인증 PW
     target_code = Column(Enum(CrawlTargetCode))  # 대상 사이트 코드
     status_code = Column(Enum(StatusCode))  # 계정 상태 코드
-    last_connected_at = Column(DateTime(timezone=True), nullable=True, default=TimestampMixin.created_at.default.arg)  # 마지막 접속
+    last_connected_at = Column(DateTime(timezone=True), nullable=True)  # 마지막 접속
     etc = Column(String, nullable=True)
 

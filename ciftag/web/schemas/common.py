@@ -13,4 +13,4 @@ class ImgDataBase(BaseModel):
     download: bool = Field(False, title="실제 다운로드 여부")
 
     class Config:
-        orm_mode = True
+        from_attributes = True
