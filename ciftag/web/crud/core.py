@@ -72,14 +72,17 @@ def search_orm(
     return records
 
 
-def insert_orm(model: Base, body) -> Base:
+def insert_orm(model: Base, body, returning=False) -> Base:
     """모델 key 기반 record update"""
     record = model(**body.dict())
 
     with dbm.create_session() as session:
         session.add(record)
 
-    return record
+    if returning:
+        return record.id
+    else:
+        return record
 
 
 def update_orm(model: Base, key: str, value: Any, body) -> Base:

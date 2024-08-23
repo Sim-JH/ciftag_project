@@ -2,7 +2,6 @@ from datetime import datetime
 
 from sqlalchemy import Column, DateTime, Integer, String, Boolean, Enum
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.sql import func
 
 from ciftag.settings import TIMEZONE
 from ciftag.models.enums import RunOnCode
