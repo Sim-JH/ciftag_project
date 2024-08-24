@@ -25,29 +25,30 @@ async def get_cred_list(
     return await get_cred_info_service(user_pk)
 
 
-@router.post("/", response_model=int, responses={200: {"description": "생성된 인증 정보의 고유 식별자(ID)"}})
-async def post_cred_info(
+@router.post("/{user_pk}", response_model=int, responses={200: {"description": "생성된 인증 정보의 고유 식별자(ID)"}})
+def post_cred_info(
     request: CredRequestBase,
+    user_pk: int = Path(gt=0, title="사용자 id")
 ):
     """인증 정보 생성"""
-    return await add_cred_info_service(request)
+    return add_cred_info_service(user_pk, request)
 
 
 @router.put("/{user_pk}/{cred_pk}", response_model=bool, responses={200: {"description": "업데이트 된 겂이 있을 경우 True"}})
-async def put_cred_info(
+def put_cred_info(
     request: CredRequestBase,
     user_pk: int = Path(gt=0, title="사용자 id"),
     cred_pk: int = Path(gt=0, title="인증 id"),
 ):
     """인증 정보 수정 (admin을 제외한 사용자는 자신의 인증 정보만 수정 가능)"""
-    return await put_cred_info_service(user_pk, cred_pk, request)
+    return put_cred_info_service(user_pk, cred_pk, request)
 
 
 @router.delete("/{user_pk}/{cred_pk}", response_model=bool, responses={200: {"description": "삭제 된 겂이 있을 경우 True"}})
-async def delete_cred_info(
+def delete_cred_info(
     user_pk: int = Path(gt=0, title="사용자 id"),
     cred_pk: int = Path(gt=0, title="인증 id"),
 ):
     """인증 정보 삭제 (admin을 제외한 사용자는 자신의 인증 정보만 삭제 가능)"""
-    return await delete_cred_info_service(user_pk, cred_pk)
+    return delete_cred_info_service(user_pk, cred_pk)
 

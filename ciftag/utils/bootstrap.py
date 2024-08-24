@@ -23,7 +23,8 @@ def initdb(debug=False):
         tables_to_be_created = [table_name for table_name in tables_to_create if table_name not in existing_tables]
 
         logs.log_data(f"Tables to be created: {tables_to_be_created}")
-
+    
+    # 테이블 생성
     Base.metadata.create_all(engine)
 
     # 그 외 초기 데이터 추가 필요 시

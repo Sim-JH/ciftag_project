@@ -1,5 +1,6 @@
 from ciftag.exceptions import CiftagAPIException
-from ciftag.models.credential import (
+from ciftag.models import (
+    UserInfo,
     CredentialInfo
 )
 from ciftag.web.crud.core import (
@@ -11,7 +12,7 @@ from ciftag.web.crud.core import (
 )
 
 
-def get_cred_info_service(user_pk: int):
+async def get_cred_info_service(user_pk: int):
     if user_pk == 0:
         result = select_orm(CredentialInfo)
     else:
@@ -20,7 +21,14 @@ def get_cred_info_service(user_pk: int):
     return result
 
 
-def add_cred_info_service(request):
+def add_cred_info_service(user_pk, request):
+    user_id = search_orm(UserInfo, 'id', user_pk, 'id', 'scalar')
+
+    if user_id is None:
+        raise CiftagAPIException('User Not Exist', 404)
+
+    request = request.dict()
+    request['user_pk'] = user_pk
     result = insert_orm(CredentialInfo, request, True)
 
     return result

@@ -11,9 +11,10 @@ class CiftagException(Exception):
 
 class CiftagWorkException(CiftagException):
     """Raise error on request with custom status_code"""
-    def __init__(self, message, status_code):
+    def __init__(self, message, status_code, **kwargs):
         super().__init__(message)
         self.status_code = status_code
+        self.kwargs = kwargs
 
 
 class CiftagAPIException(CiftagException):

@@ -46,33 +46,33 @@ class CrawlStatusCode(Enum):
 class WorkStatusCode(Enum):
     """외부 작업 상태 코드"""
     # 작업 실행 관련
-    pending: "100"  # 대기
-    trigger: "110"  # 트리거 (push queue)
-    download: "120"  # 실제 이미지 저장
-    postproc: "130"  # 후처리
+    pending = "100"  # 대기
+    trigger = "110"  # 트리거 (push queue)
+    download = "120"  # 실제 이미지 저장
+    postproc = "130"  # 후처리
 
     # 작업 완료 관련
-    success: "202"  # 크롤링 작업 성공
-    end: "200"  # 모든 작업 종료
+    success = "202"  # 크롤링 작업 성공
+    end = "200"  # 모든 작업 종료
 
     # 작업 에러 관련
-    failed: "400"  # 작업 실패
-    canceled: "401"  # 작업 취소
+    failed = "400"  # 작업 실패
+    canceled = "401"  # 작업 취소
 
 
 class TaskStatusCode(Enum):
     """내부 작업 상태 코드"""
     # 작업 실행 관련
-    load: "100"  # 대기 (pop queue)
-    run: "110"  # 수집 시작
-    login: "120"  # 로그인
-    search: "130"  # 태그 검색
-    result: "140"  # 결과 인입
+    load = "100"  # 대기 (pop queue)
+    run = "110"  # 수집 시작
+    login = "120"  # 로그인
+    search = "130"  # 태그 검색
+    result = "140"  # 결과 인입
 
     # 작업 완료 관련
-    success: "200"  # 작업 성공
+    success = "200"  # 작업 성공
 
     # 작업 에러 관련
-    failed: "400"  # 작업 실패
-    canceled: "401"  # 작업 취소
-    retry: "402"  # 작업 재시도
+    failed = "400"  # 작업 실패
+    canceled = "401"  # 작업 취소
+    retry = "402"  # 작업 재시도

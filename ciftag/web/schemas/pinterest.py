@@ -14,7 +14,7 @@ class PinterestResponseBase(CrawlResponseBase):
         description="작업 상태 코드의 값은 다음과 같습니다: "
                     + ", ".join([f"{e.name}: {e.value}" for e in enums.WorkStatusCode])
     )
-    tag: list = Field(None, title="검색 할 태그")
+    tags: str = Field(None, title="검색 할 태그")
     hits: int = Field(None, title="크롤링 성공 갯수")
     downloads: int = Field(None, title="실제 다운로드한 이미지 갯수")
     elapsed_time: time = Field(None, title="크롤링 소모 시간")

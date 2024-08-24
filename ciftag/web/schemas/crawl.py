@@ -7,26 +7,27 @@ from ciftag.models import enums
 
 class CrawlBase(BaseModel):
     user_pk: int = Field(None, gt=0, title="사용자 pk")
-    target_code: List[enums.CrawlTargetCode] = Field(
+    target_code: enums.CrawlTargetCode = Field(
         "1",
         title="크롤링 대상 사이트 코드",
-        description="크롤링 대상 사이트 코드의 값은 다음과 같으며 복수로 가능합니다: "
+        description="크롤링 대상 사이트 코드의 값은 다음과 같습니다: "
                     + ", ".join([f"{e.name}: {e.value}" for e in enums.CrawlTargetCode])
-    )
+    )  # TODO 추후에는 복수의 target에 대해 요청이 가능하도록
     run_on: enums.RunOnCode = Field(
         None,
         title="실행 환경 코드",
         description="실행 환경 코드의 값은 다음과 같습니다: "
                     + ", ".join([f"{e.name}: {e.value}" for e in enums.RunOnCode])
     )
+    tags: list = Field(None, title="검색 할 태그 목록")
     cnt: int = Field(1, gt=0, lt=100, title="크롤링 할 이미지 갯수", description="최대 100개까지")
 
 
 class CrawlRequestBase(CrawlBase):
-    min_height: Optional[int] = Field(None, title="이미지 최소 높이")  # nullable
-    max_height: Optional[int] = Field(None, title="이미지 최대 높이")  # nullable
-    min_width: Optional[int] = Field(None, title="이미지 최소 너비")  # nullable
-    max_width: Optional[int] = Field(None, title="이미지 최대 너비")  # nullable
+    min_height: int = Field(0, title="이미지 최소 높이")
+    max_height: int = Field(0, title="이미지 최대 높이")
+    min_width: int = Field(0, title="이미지 최소 너비")
+    max_width: int = Field(0, title="이미지 최대 너비")
 
 
 class CrawlResponseBase(CrawlBase):

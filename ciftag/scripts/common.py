@@ -1,20 +1,30 @@
 from typing import Dict, Any
+from datetime import datetime
 
+from ciftag.settings import TIMEZONE
+import ciftag.utils.logger as logger
 from ciftag.scripts.core import save_sql
+
+logs = logger.Logger(log_dir='sql')
 
 
 def insert_task_status(args: Dict[str, Any]):
     """내부 작업 & 이력 insert"""
-    task_sql = f"""INSERT INTO task_info VALUES (work_pk, runner_identify, body, task_sta, get_cnt, goal_cnt) 
-                        VALUES(:work_pk, :runner_identify, :body, :task_sta, :get_cnt, :goal_cnt)
+    task_sql = f"""INSERT INTO task_info (work_pk, runner_identify, body, task_sta, get_cnt, goal_cnt, start_dt) 
+                        VALUES(:work_pk, :runner_identify, :body, :task_sta, :get_cnt, :goal_cnt, :start_dt)
                    RETURNING id"""
 
-    _, task_id = save_sql(task_sql, args=args, returning=True)
+    _, task_id = save_sql(task_sql, args=args, returning='id')
 
-    task_h_sql = f"""INSERT INTO task_info_hist VALUES (task_pk, work_pk, runner_identify, body, task_sta, get_cnt, goal_cnt) 
-                          VALUES(:task_pk, :work_pk, :runner_identify, :body, :task_sta, :get_cnt, :goal_cnt)"""
+    task_h_sql = f"""INSERT INTO task_info_hist (task_pk, work_pk, runner_identify, task_sta, get_cnt, goal_cnt, start_dt, created_at) 
+                          VALUES(:task_pk, :work_pk, :runner_identify, :task_sta, :get_cnt, :goal_cnt, :start_dt, :created_at)"""
 
-    args.update({'task_pk': task_id})
+    args.update(
+        {
+            'task_pk': task_id,
+            'created_at': datetime.now(TIMEZONE)
+        }
+    )
 
     save_sql(task_h_sql, args=args)
 
@@ -32,15 +42,24 @@ def update_task_status(task_id: int, args: Dict[str, Any]):
         set_clauses.append(f"{key} = :{key}")
 
     task_sql += ", ".join(set_clauses)
-    task_sql += f" WHERE id = {task_id} RETURNING id"
 
-    save_sql(task_sql, args=args)
+    # 업데이트된 row의 값을 가져오기
+    task_sql += f" WHERE id = {task_id} RETURNING *"
 
-    task_h_sql = f"""INSERT INTO task_info_hist VALUES (task_pk, work_pk, runner_identify, body, task_sta, get_cnt, goal_cnt) 
-                VALUES(:task_pk, :work_pk, :runner_identify, :body, :task_sta, :get_cnt, :goal_cnt)"""
+    _, task_row = save_sql(task_sql, args=args, returning=True)
+    task_row_dict = {
+        'task_pk': task_row[0],
+        'work_pk': task_row[1],
+        'runner_identify': task_row[2],
+        'task_sta': task_row[4],
+        'get_cnt': task_row[5],
+        'goal_cnt': task_row[6],
+        'created_at': datetime.now(TIMEZONE)
+    }
 
-    args.update({'task_pk': task_id})
+    task_h_sql = f"""INSERT INTO task_info_hist (task_pk, work_pk, runner_identify, task_sta, get_cnt, goal_cnt, created_at) 
+                          VALUES(:task_pk, :work_pk, :runner_identify, :task_sta, :get_cnt, :goal_cnt, :created_at)"""
 
-    save_sql(task_h_sql, args=args)
+    save_sql(task_h_sql, args=task_row_dict)
 
     return task_id

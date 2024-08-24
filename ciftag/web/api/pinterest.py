@@ -33,7 +33,7 @@ async def get_pinterest_img(
 
 
 @router.get("/thum/{img_pk}",  response_class=FileResponse)
-async def get_pinterest_thumnail(
+def get_pinterest_thumnail(
     img_pk: int = Path(gt=0, title="핀터레스트 이미지 id", description="download가 True인 이미지만 가능"),
 ):
     """이미지 썸네일 확인"""

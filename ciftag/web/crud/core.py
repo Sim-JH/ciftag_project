@@ -1,5 +1,6 @@
 from typing import Any, List, Dict, Tuple, Union
 
+from pydantic import BaseModel
 from sqlalchemy import column,  asc, desc
 from sqlalchemy.dialects.postgresql import insert
 
@@ -72,9 +73,12 @@ def search_orm(
     return records
 
 
-def insert_orm(model: Base, body, returning=False) -> Base:
+def insert_orm(model: Base, body: Union[BaseModel, Dict[str, Any]], returning=False) -> Base:
     """모델 key 기반 record update"""
-    record = model(**body.dict())
+    if isinstance(body, dict):
+        record = model(**body)
+    else:
+        record = model(**body.dict())
 
     with dbm.create_session() as session:
         session.add(record)
@@ -92,8 +96,11 @@ def update_orm(model: Base, key: str, value: Any, body) -> Base:
     if not table_key:
         raise CiftagAPIException(f"Resource {key} not found", 404)
 
+    if not isinstance(body, dict):
+        body = body.dict()
+
     with dbm.create_session() as session:
-        record = session.query(model).filter(table_key == value).update(body.dict())
+        record = session.query(model).filter(table_key == value).update(body)
 
     return record
 

@@ -1,16 +1,16 @@
 import os
 from typing import Any, Dict, List, Tuple, Union
 
-from celery import chain, group
+from celery import chain, group, chord
 
 from ciftag.exceptions import CiftagWorkException
 
 from ciftag.celery_app import app
 from ciftag.utils.crypto import CiftagCrypto
+from ciftag.utils.converter import convert_enum_in_data
 from ciftag.models import PinterestCrawlInfo, enums
 from ciftag.web.crud.core import insert_orm
 from ciftag.web.crud.common import insert_work_status, update_work_status
-from ciftag.services.pinterest.run import run
 
 
 class CrawlTriggerDispatcher:
@@ -29,6 +29,7 @@ class CrawlTriggerDispatcher:
         # aws 실행의 경우 github action 트리거 시킬 시 전달하여 apply 환경 변수로 등록
         self.crypto = CiftagCrypto()
         self.crypto_key = self.crypto.key_gen()
+        self.crypto.load_key(self.crypto_key)
 
     def _cal_segment(self, worker):
         remainder = self.body['cnt'] % worker
@@ -39,14 +40,14 @@ class CrawlTriggerDispatcher:
 
         return result
 
-    def _trigger_pinterest(self, work_id, crawl_pk):
+    def _trigger_pinterest(self, work_id: int, crawl_pk: int):
         insert_orm(
             PinterestCrawlInfo,
             {
                 'work_pk': work_id,
                 'crawl_pk': crawl_pk,
                 'cred_pk_list': '/'.join(self.cred_pk_list),
-                'tag': self.body['tag'],
+                'tags': self.body['tags'],
                 'hits': 0,
                 'downloads': 0
             }
@@ -54,11 +55,11 @@ class CrawlTriggerDispatcher:
 
         tasks = []
 
-        if self.run_on == "1":
+        if self.run_on == enums.RunOnCode.local:
             # 현재 test 용도 TODO 수식 개선
             worker = 5  # task queue의 concurrency는 10으로 설정
             segments = self._cal_segment(worker=worker)
-            os.environ['crypto_key'] = self.crypto_key  # 현재 celery는 동일 환경 실행
+            os.environ['crypto_key'] = self.crypto_key.decode()  # 현재 celery는 동일 환경 실행
 
             success_s = app.signature("ciftag.callbacks.pinterest_success")
             error_s = app.signature("ciftag.callbacks.pinterest_fail")
@@ -70,7 +71,7 @@ class CrawlTriggerDispatcher:
                         'work_id': work_id,
                         'cred_info_list': self.cred_info_list,
                         'goal_cnt': int(goal_cnt),
-                        'data': self.body
+                        'data': convert_enum_in_data(self.body)  # enum 직렬화
                     }
                 ).set(queue='task')
                 tasks.append(chain(run_s, success_s).on_error(error_s))
@@ -78,8 +79,8 @@ class CrawlTriggerDispatcher:
             # 작업 모음 실행 및 완료 후 실행될 작업 추가 (run_group = chord(tasks)(callback))
             # aws 에선 모든 컨테이너 종료 후 실행 작업 # TODO redis set 남은 것 확인 & airflow 트리거
             run_group = group(*tasks)
-            run_group.apply_async(
-                link=app.signature(
+            chord(run_group)(
+                app.signature(
                     "ciftag.task.pinterest_after",
                     kwargs={
                         'work_id': work_id
@@ -87,14 +88,14 @@ class CrawlTriggerDispatcher:
                 )
             )
 
-        elif self.run_on == "2":
+        elif self.run_on == enums.RunOnCode.aws:
             pass
 
         update_work_status(work_id, {'work_sta': enums.WorkStatusCode.trigger})
 
     def set_cred_info(self, user_list: List[Tuple[str:str]]):
         for cred_pk, cred_id, cred_pw in user_list:
-            self.cred_pk_list.append(cred_pk)
+            self.cred_pk_list.append(str(cred_pk))
             self.cred_info_list.append(
                 {
                     'cred_id': cred_id,
@@ -105,8 +106,8 @@ class CrawlTriggerDispatcher:
     def run(self, crawl_pk) -> Union[int | str]:
         work_id = insert_work_status({'work_sta': enums.WorkStatusCode.pending})
 
-        if self.target_code == "1":
-            self.target_code(work_id, crawl_pk)
+        if self.target_code == enums.CrawlTargetCode.pinterest:
+            self._trigger_pinterest(work_id, crawl_pk)
 
         return work_id
 

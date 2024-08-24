@@ -17,6 +17,7 @@ class CrawlRequestInfo(Base, TimestampMixin):
     run_on = Column(Enum(enums.RunOnCode))  # 수행한 환경
     target_code = Column(Enum(enums.CrawlTargetCode))  # 대상 사이트 코드
     triggered = Column(Boolean)  # 작업 트리거 됨
+    tags = Column(String)  # 크롤링 대상 태그 tag/tag/tag 구조
     cnt = Column(Integer)  # 목표 이미지 갯수
     etc = Column(String, nullable=True)  # 비고
 

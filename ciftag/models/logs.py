@@ -6,7 +6,7 @@ from sqlalchemy.sql import func
 
 from ciftag.settings import TIMEZONE
 from ciftag.models import enums
-from ciftag.models.base import Base, TimestampMixin
+from ciftag.models.base import Base
 
 
 class WorkInfo(Base):
@@ -22,7 +22,7 @@ class WorkInfo(Base):
     end_dt = Column(DateTime(timezone=True), nullable=True)  # 종료 시간
 
 
-class WorkInfoHistory(Base, TimestampMixin):
+class WorkInfoHistory(Base):
     """외부 작업 정보 이력"""
 
     __tablename__ = "work_info_hist"
@@ -37,9 +37,12 @@ class WorkInfoHistory(Base, TimestampMixin):
     traceback = Column(Text, default=None)  # 추적 로그
     start_dt = Column(DateTime(timezone=True), default=lambda: datetime.now(TIMEZONE))  # 시작 시간
     end_dt = Column(DateTime(timezone=True), nullable=True)  # 종료 시간
+    created_at = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(TIMEZONE)
+    )
 
 
-class TaskInfo(Base, TimestampMixin):
+class TaskInfo(Base):
     """내부 작업 정보 이력
     task는 ecs fargate or celery worker 별로 한 개씩 발행
     queue 번호는 크롤링 목표 이미지에 따라 큐를 나누고 순서대로 번호를 붙인 것
@@ -58,7 +61,7 @@ class TaskInfo(Base, TimestampMixin):
     end_dt = Column(DateTime(timezone=True), nullable=True)  # 종료 시간
 
 
-class TaskInfoHist(Base, TimestampMixin):
+class TaskInfoHist(Base):
     """내부 작업 정보 이력
     task는 ecs fargate or celery worker 별로 한 개씩 발행
     queue 번호는 크롤링 목표 이미지에 따라 큐를 나누고 순서대로 번호를 붙인 것
@@ -69,7 +72,7 @@ class TaskInfoHist(Base, TimestampMixin):
     id = Column(Integer, primary_key=True)
     task_pk = Column(
         Integer,
-        ForeignKey("task_pk.id")
+        ForeignKey("task_info.id")
     )  # 사용자 정보 ID (FK)
     work_pk = Column(Integer)  # 작업 정보 ID (FK)
     runner_identify = Column(String)  # 현재 처리기 [worke or continaer] (work_id + host_name + real ip + time)
@@ -80,4 +83,7 @@ class TaskInfoHist(Base, TimestampMixin):
     traceback = Column(Text, default=None)  # 추적 로그
     start_dt = Column(DateTime(timezone=True), default=func.now())  # 시작 시간
     end_dt = Column(DateTime(timezone=True), nullable=True)  # 종료 시간
+    created_at = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(TIMEZONE)
+    )
 

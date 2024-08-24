@@ -1,7 +1,7 @@
 from sqlalchemy import Column, ForeignKey, Integer, String, Time
 
-from ciftag.models.base import Base, TimestampMixin, ImgDataImgDataMixin
-from ciftag.models.crawl import CrawlRequestInfo
+from ciftag.models import CrawlRequestInfo
+from ciftag.models.base import ImgDataImgDataMixin
 
 
 class PinterestCrawlInfo(CrawlRequestInfo):
@@ -16,10 +16,9 @@ class PinterestCrawlInfo(CrawlRequestInfo):
         primary_key=True
     )  # 크롤링 정보 ID (FK)
     cred_pk_list = Column(String)  # 사용가능한 인증 정보 id 리스트 (FK) "id/id/id" 로 구분
-    tag = Column(String)  # 크롤링 대상 태그
     hits = Column(Integer)  # 크롤링 성공 갯수
     downloads = Column(Integer)  # 실제 이미지로 다운로드한 갯수
-    elapsed_time = Column(Time, nullable=False)  # 작업 소모 시간
+    elapsed_time = Column(Time, nullable=True)  # 작업 소모 시간
 
 
 class PinterestCrawlData(ImgDataImgDataMixin):

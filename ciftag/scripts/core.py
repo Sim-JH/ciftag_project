@@ -24,13 +24,13 @@ def save_sql(sql, args=None, returning=False):
         cur = conn.execute(text(sql), args)
 
     row_count = cur.rowcount
-    effect_rowid = 0
+    effect_row = 0
 
     if returning and "RETURNING" in sql.upper():
-        effect_rowid = cur.fetchone()
+        effect_row = cur.fetchone()  # tuple로 열 내용 반환
 
-        if effect_rowid:
-            effect_rowid = effect_rowid[0]
+        if returning == "id":
+            effect_row = effect_row[0]
 
-    return row_count, effect_rowid
+    return row_count, effect_row
 

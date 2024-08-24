@@ -20,7 +20,6 @@ from ciftag.services.pinterest import (
 
 
 USERAGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36"
-logs = logger.Logger(log_dir=PAGETYPE)
 
 
 def run(
@@ -32,7 +31,9 @@ def run(
         data: Dict[str, Any],
         headless: bool = True
 ):
-    update_task_status(task_id, {'task_sta': enums.TaskStatusCode.run})
+    logs = logger.Logger(log_dir=PAGETYPE, log_name=runner_identify)
+    # TODO 계정 상태 업데이트, task 상태 업데이트, 결과 db 적재,
+    update_task_status(task_id, {'task_sta': enums.TaskStatusCode.run.name})
 
     cred_id = data['cred_id']
     cred_pw = data['cred_pw']
@@ -41,8 +42,8 @@ def run(
     retry = int(data['retry']) if data.get('retry') else 1
 
     # 이미지 크기 범위 지정 시
-    min_width = int(data['min_width']) if data.get('min_width') else None
-    max_width = int(data.get('max_width')) if data.get('max_width') else None
+    min_width = int(data['min_width']) if int(data.get('min_width')) else None
+    max_width = int(data.get('max_width')) if int(data.get('max_width')) else None
 
     # redis set name
     redis_name = f"{PAGETYPE}_{work_id}"
@@ -50,8 +51,8 @@ def run(
     # pw 암호 키 존재 시
     if crypto_key := os.getenv('crypto_key'):
         ciftag_crypto = crypto.CiftagCrypto()
-        ciftag_crypto.load_key(crypto_key)
-        passwd = ciftag_crypto.decrypt_text(cred_pw)
+        ciftag_crypto.load_key(crypto_key.encode())
+        cred_pw = ciftag_crypto.decrypt_text(cred_pw)
 
     # TODO proxy setting
     proxy_settings = {}

@@ -6,8 +6,6 @@ import sys
 import time
 import random
 import atexit
-from collections import defaultdict
-from subprocess import check_output
 
 from ciftag.settings import SERVER_TYPE
 from ciftag.fargate.sqs import SqsManger

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Enum
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Enum, UniqueConstraint
 
 from ciftag.models import enums
 from ciftag.models.base import Base, TimestampMixin
@@ -21,4 +21,8 @@ class CredentialInfo(Base, TimestampMixin):
     status_code = Column(Enum(enums.StatusCode))  # 계정 상태 코드
     last_connected_at = Column(DateTime(timezone=True), nullable=True)  # 마지막 접속
     etc = Column(String, nullable=True)
+
+    # 사용자의 사이트 별 id는 unique
+    __table_args__ = (UniqueConstraint('user_pk', 'cred_ident', name='target_code'),)
+
 
