@@ -24,10 +24,13 @@ def save_sql(sql, args=None, returning=False):
         cur = conn.execute(text(sql), args)
 
     row_count = cur.rowcount
-    effect_rowids = 0
+    effect_rowid = 0
 
     if returning and "RETURNING" in sql.upper():
-        effect_rowids = cur.fetchall()
+        effect_rowid = cur.fetchone()
 
-    return row_count, effect_rowids
+        if effect_rowid:
+            effect_rowid = effect_rowid[0]
+
+    return row_count, effect_rowid
 

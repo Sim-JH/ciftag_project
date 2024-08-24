@@ -2,7 +2,6 @@ from typing import List, Union
 
 from fastapi import APIRouter, Path
 
-from ciftag.models import enums
 from ciftag.web.schemas.cred import (
     CredRequestBase,
     CredResponseBase

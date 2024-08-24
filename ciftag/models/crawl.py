@@ -1,7 +1,7 @@
 from sqlalchemy import Column,  ForeignKey, Integer, String, Boolean, Enum
 
+from ciftag.models import enums
 from ciftag.models.base import Base, TimestampMixin
-from ciftag.models.enums import RunOnCode, CrawlTargetCode, WorkStatusCode
 
 
 class CrawlRequestInfo(Base, TimestampMixin):
@@ -14,8 +14,8 @@ class CrawlRequestInfo(Base, TimestampMixin):
         Integer,
         ForeignKey("user_info.id", onupdate="CASCADE"),
     )  # 사용자 정보 ID (FK)
-    run_on = Column(Enum(RunOnCode))  # 수행한 환경
-    target_code = Column(Enum(CrawlTargetCode))  # 대상 사이트 코드
+    run_on = Column(Enum(enums.RunOnCode))  # 수행한 환경
+    target_code = Column(Enum(enums.CrawlTargetCode))  # 대상 사이트 코드
     triggered = Column(Boolean)  # 작업 트리거 됨
     cnt = Column(Integer)  # 목표 이미지 갯수
     etc = Column(String, nullable=True)  # 비고

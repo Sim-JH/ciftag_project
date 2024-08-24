@@ -5,8 +5,8 @@ from sqlalchemy import Column, DateTime, Integer, String, Text, Enum, ForeignKey
 from sqlalchemy.sql import func
 
 from ciftag.settings import TIMEZONE
+from ciftag.models import enums
 from ciftag.models.base import Base, TimestampMixin
-from ciftag.models.enums import WorkStatusCode, TaskStatusCode
 
 
 class WorkInfo(Base):
@@ -15,11 +15,11 @@ class WorkInfo(Base):
     __tablename__ = "work_info"
 
     id = Column(Integer, primary_key=True)
-    work_sta = Column(Enum(WorkStatusCode))  # 외부 작업 상태
+    work_sta = Column(Enum(enums.WorkStatusCode))  # 외부 작업 상태
     msg = Column(String, default=None)  # 에러 메시지
     traceback = Column(Text, default=None)  # 추적 로그
     start_dt = Column(DateTime(timezone=True), default=lambda: datetime.now(TIMEZONE))  # 시작 시간
-    end_dt = Column(DateTime(timezone=True))  # 종료 시간
+    end_dt = Column(DateTime(timezone=True), nullable=True)  # 종료 시간
 
 
 class WorkInfoHistory(Base, TimestampMixin):
@@ -32,11 +32,11 @@ class WorkInfoHistory(Base, TimestampMixin):
         Integer,
         ForeignKey("work_info.id")
     )  # 사용자 정보 ID (FK)
-    work_sta = Column(Enum(WorkStatusCode))  # 외부 작업 상태
+    work_sta = Column(Enum(enums.WorkStatusCode))  # 외부 작업 상태
     msg = Column(String, default=None)  # 에러 메시지
     traceback = Column(Text, default=None)  # 추적 로그
-    start_dt = Column(DateTime(timezone=True), default=func.now())  # 시작 시간
-    end_dt = Column(DateTime(timezone=True))  # 종료 시간
+    start_dt = Column(DateTime(timezone=True), default=lambda: datetime.now(TIMEZONE))  # 시작 시간
+    end_dt = Column(DateTime(timezone=True), nullable=True)  # 종료 시간
 
 
 class TaskInfo(Base, TimestampMixin):
@@ -49,13 +49,13 @@ class TaskInfo(Base, TimestampMixin):
 
     id = Column(Integer, primary_key=True)
     work_pk = Column(Integer)  # 작업 정보 ID (FK)
-    task_identify = Column(String)  # 현재 작업 컨테이너 (work_id + host_name + real ip + round(time.time() * 1000))
+    runner_identify = Column(String)  # 현재 처리기 [worke or continaer] (work_id + host_name + real ip + time)
     body = Column(Text)  # queue body 정보
-    task_sta = Column(Enum(TaskStatusCode))  # 내부 작업 상태
+    task_sta = Column(Enum(enums.TaskStatusCode))  # 내부 작업 상태
     get_cnt = Column(Integer)  # 크롤링 한 이미지 정보 갯수  
     goal_cnt = Column(Integer)  # 할당 받은 이미지 정보 갯수
-    start_dt = Column(DateTime(timezone=True), default=func.now())  # 시작 시간
-    end_dt = Column(DateTime(timezone=True))  # 종료 시간
+    start_dt = Column(DateTime(timezone=True), default=lambda: datetime.now(TIMEZONE))  # 시작 시간
+    end_dt = Column(DateTime(timezone=True), nullable=True)  # 종료 시간
 
 
 class TaskInfoHist(Base, TimestampMixin):
@@ -72,12 +72,12 @@ class TaskInfoHist(Base, TimestampMixin):
         ForeignKey("task_pk.id")
     )  # 사용자 정보 ID (FK)
     work_pk = Column(Integer)  # 작업 정보 ID (FK)
-    task_identify = Column(String)  # work_queue_ip 로 구성 (work_id + queue 번호 + real ip)
-    task_sta = Column(Enum(TaskStatusCode))  # 내부 작업 상태
+    runner_identify = Column(String)  # 현재 처리기 [worke or continaer] (work_id + host_name + real ip + time)
+    task_sta = Column(Enum(enums.TaskStatusCode))  # 내부 작업 상태
     get_cnt = Column(Integer)  # 크롤링 한 이미지 정보 갯수
     goal_cnt = Column(Integer)  # 할당 받은 이미지 정보 갯수
     msg = Column(String, default=None)  # 에러 메시지
     traceback = Column(Text, default=None)  # 추적 로그
     start_dt = Column(DateTime(timezone=True), default=func.now())  # 시작 시간
-    end_dt = Column(DateTime(timezone=True))  # 종료 시간
+    end_dt = Column(DateTime(timezone=True), nullable=True)  # 종료 시간
 

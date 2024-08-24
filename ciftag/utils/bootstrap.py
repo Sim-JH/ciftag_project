@@ -32,13 +32,13 @@ def initdb(debug=False):
 
 def create_base_account():
     sql = f"""INSERT INTO user_info (user_ident, user_pw, user_name, auth_code, status_code)
-                SELECT 'admin', 'admin', '관리자', 'admin', 'active'
-                WHERE NOT EXISTS (SELECT 1 FROM user_info);"""
+                   SELECT 'admin', 'admin', '관리자', 'admin', 'active'
+              WHERE NOT EXISTS (SELECT 1 FROM user_info);"""
 
     save_sql(sql)
 
     sql = f"""INSERT INTO user_info (user_ident, user_pw, user_name, auth_code, status_code)
-                SELECT 'test', 'test', '테스트_유저', 'user', 'active'
-                WHERE (SELECT COUNT(*) FROM user_info) = 1;"""
+                   SELECT 'test', 'test', '테스트_유저', 'user', 'active'
+              WHERE (SELECT COUNT(*) FROM user_info) = 1;"""
 
     save_sql(sql)

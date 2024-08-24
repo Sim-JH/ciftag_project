@@ -6,7 +6,7 @@ from ciftag.exceptions import CiftagWorkException
 
 from ciftag.celery_app import app
 from ciftag.utils.crypto import CiftagCrypto
-from ciftag.models import WorkStatusCode, PinterestCrawlInfo
+from ciftag.models import PinterestCrawlInfo, enums
 from ciftag.web.crud.core import insert_orm
 from ciftag.web.crud.common import insert_work_status, update_work_status
 from ciftag.services.pinterest.run import run
@@ -88,7 +88,7 @@ class CrawlTriggerDispatcher:
         elif self.run_on == "2":
             pass
 
-        update_work_status(work_id, {'work_sta': WorkStatusCode.trigger})
+        update_work_status(work_id, {'work_sta': enums.WorkStatusCode.trigger})
 
     def set_cred_info(self, user_list: List[Tuple[str:str]]):
         for cred_pk, cred_id, cred_pw in user_list:
@@ -101,7 +101,7 @@ class CrawlTriggerDispatcher:
             )
 
     def run(self, crawl_pk) -> Union[int | str]:
-        work_id = insert_work_status({'work_sta': WorkStatusCode.pending})
+        work_id = insert_work_status({'work_sta': enums.WorkStatusCode.pending})
 
         if self.target_code == "1":
             self.target_code(work_id, crawl_pk)
