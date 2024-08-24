@@ -2,6 +2,7 @@ import time
 import re
 import traceback
 
+from ciftag.integrations.redis import RedisManager
 from ciftag.services.pinterest import PAGETYPE
 
 
@@ -10,12 +11,13 @@ def get_image_width(url):
     return int(_match.group(1)) if _match else 0
 
 
-def search(logs, page, tag, max_pins, min_width=None, max_width=None):
+def search(logs, page, redis_name, tag, max_pins, min_width=None, max_width=None):
     logs.log_data(f'--- {PAGETYPE} 검색 시작: {tag}')
     page.goto(f"https://www.pinterest.com/search/pins/?q={tag}")
     page.wait_for_load_state("networkidle")
     page.wait_for_timeout(3*600)
 
+    redis_m = RedisManager()
     _continue_flag = True
     pins = []
     last_height = page.evaluate("document.body.scrollHeight")
@@ -47,6 +49,10 @@ def search(logs, page, tag, max_pins, min_width=None, max_width=None):
             if len(pins) >= max_pins:
                 _continue_flag = False
                 break
+
+            # 이미 크롤링 된 link는 pass
+            if redis_m.check_set_form_redis(work_identity, link):
+                continue
 
             try:
                 # 상세 페이지로 이동하여 원본 이미지 URL 추출
@@ -114,6 +120,9 @@ def search(logs, page, tag, max_pins, min_width=None, max_width=None):
                     "img_width": img_width,
                     "img_height": img_height
                 })
+
+                # 중복 크롤링 방지
+                redis_m.add_set_to_redis(redis_name, link)
 
             except Exception as e:
                 traceback_str = ''.join(traceback.format_tb(e.__traceback__))

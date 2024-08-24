@@ -4,8 +4,8 @@ import time
 from ciftag.services.pinterest import PAGETYPE
 
 
-def login(logs, context, uid, passwd):
-    logs.log_data(f'--- {PAGETYPE} 로그인 시작: {uid}')
+def login(logs, context, cred_id, cred_pw):
+    logs.log_data(f'--- {PAGETYPE} 로그인 시작: {cred_id}')
     dir_path = f""
 
     # 리소스 최적화를 위해 login 관련 요청에 대해서만 진행
@@ -39,20 +39,20 @@ def login(logs, context, uid, passwd):
         except Exception as e:
             print('Exception', e)
             if isinstance(e, TimeoutError):
-                logs.log_data(f'{uid} {PAGETYPE} login page Timeout 진입 재시도')
+                logs.log_data(f'{cred_id} {PAGETYPE} login page Timeout 진입 재시도')
             else:
-                logs.log_data(f'{uid} {PAGETYPE} login page 진입 재시도: {e}')
+                logs.log_data(f'{cred_id} {PAGETYPE} login page 진입 재시도: {e}')
             page.close()
             time.sleep(5)
             page = context.new_page()
     else:
-        logs.log_data(f'{uid} {PAGETYPE} login page 진입 실패')
+        logs.log_data(f'{cred_id} {PAGETYPE} login page 진입 실패')
         return {"result": False, "message": 'Timeout'}
 
     # 로그인 시도
     page.set_default_timeout(60000)  # 기본 타임 아웃을 60초로 설정
-    page.type('input[id="email"]', uid, delay=200)
-    page.type('input[id="password"]', passwd, delay=200)
+    page.type('input[id="email"]', cred_id, delay=200)
+    page.type('input[id="password"]', cred_pw, delay=200)
     page.click('button[type="submit"]')
     page.wait_for_load_state("networkidle")
     page.wait_for_timeout(5000)

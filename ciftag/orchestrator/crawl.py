@@ -1,3 +1,4 @@
+import os
 from typing import Any, Dict, List, Tuple, Union
 
 from celery import chain, group
@@ -24,7 +25,7 @@ class CrawlTriggerDispatcher:
         self.target_code = data['target_code']
 
         # crypto_key의 경우 환경 변수로 주입
-        # local 실행은 분리된 큐에서 실행시키지만 환경은 같으므로 그냥 드록
+        # local 실행은 분리된 큐에서 실행시키지만 환경은 같으므로 그냥 등록
         # aws 실행의 경우 github action 트리거 시킬 시 전달하여 apply 환경 변수로 등록
         self.crypto = CiftagCrypto()
         self.crypto_key = self.crypto.key_gen()
@@ -57,6 +58,7 @@ class CrawlTriggerDispatcher:
             # 현재 test 용도 TODO 수식 개선
             worker = 5  # task queue의 concurrency는 10으로 설정
             segments = self._cal_segment(worker=worker)
+            os.environ['crypto_key'] = self.crypto_key  # 현재 celery는 동일 환경 실행
 
             success_s = app.signature("ciftag.callbacks.pinterest_success")
             error_s = app.signature("ciftag.callbacks.pinterest_fail")
@@ -67,7 +69,7 @@ class CrawlTriggerDispatcher:
                     kwargs={
                         'work_id': work_id,
                         'cred_info_list': self.cred_info_list,
-                        'goal_cnt': goal_cnt,
+                        'goal_cnt': int(goal_cnt),
                         'data': self.body
                     }
                 ).set(queue='task')
@@ -78,7 +80,7 @@ class CrawlTriggerDispatcher:
             run_group = group(*tasks)
             run_group.apply_async(
                 link=app.signature(
-                    'ciftag.task.pinterest_after',
+                    "ciftag.task.pinterest_after",
                     kwargs={
                         'work_id': work_id
                     }
