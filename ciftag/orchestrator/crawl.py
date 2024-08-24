@@ -6,8 +6,9 @@ from ciftag.exceptions import CiftagWorkException
 
 from ciftag.celery_app import app
 from ciftag.utils.crypto import CiftagCrypto
-from ciftag.models import WorkInfo, WorkInfoHistory, WorkStatusCode, PinterestCrawlInfo
+from ciftag.models import WorkStatusCode, PinterestCrawlInfo
 from ciftag.web.crud.core import insert_orm
+from ciftag.web.crud.common import insert_work_status, update_work_status
 from ciftag.services.pinterest.run import run
 
 
@@ -38,7 +39,6 @@ class CrawlTriggerDispatcher:
         return result
 
     def _trigger_pinterest(self, work_id, crawl_pk):
-        # TODO pinterest 정보 등록
         insert_orm(
             PinterestCrawlInfo,
             {
@@ -48,8 +48,8 @@ class CrawlTriggerDispatcher:
                 'tag': self.body['tag'],
                 'hits': 0,
                 'downloads': 0
-            },
-            True)
+            }
+        )
 
         tasks = []
 
@@ -58,10 +58,12 @@ class CrawlTriggerDispatcher:
             worker = 5  # task queue의 concurrency는 10으로 설정
             segments = self._cal_segment(worker=worker)
 
-            # TODO redis 할당 search의 중복 크롤링도 해결필요(redis고려)도 참조
+            success_s = app.signature("ciftag.callbacks.pinterest_success")
+            error_s = app.signature("ciftag.callbacks.pinterest_fail")
+
             for idx, goal_cnt in enumerate(segments):
                 run_s = app.signature(
-                    "ciftag.work.run_pinterest",
+                    "ciftag.task.pinterest_run",
                     kwargs={
                         'work_id': work_id,
                         'cred_info_list': self.cred_info_list,
@@ -69,15 +71,24 @@ class CrawlTriggerDispatcher:
                         'data': self.body
                     }
                 ).set(queue='task')
-                # TODO on_failure 추가
-                tasks.append(chain(run_s))
+                tasks.append(chain(run_s, success_s).on_error(error_s))
 
-            # TODO update work info/insert hist info 헬퍼 함수 작성하여 trigger 단계로 업데이트
+            # 작업 모음 실행 및 완료 후 실행될 작업 추가 (run_group = chord(tasks)(callback))
+            # aws 에선 모든 컨테이너 종료 후 실행 작업 # TODO redis set 남은 것 확인 & airflow 트리거
             run_group = group(*tasks)
-            run_group.apply_async()
+            run_group.apply_async(
+                link=app.signature(
+                    'ciftag.task.pinterest_after',
+                    kwargs={
+                        'work_id': work_id
+                    }
+                )
+            )
 
         elif self.run_on == "2":
             pass
+
+        update_work_status(work_id, {'work_sta': WorkStatusCode.trigger})
 
     def set_cred_info(self, user_list: List[Tuple[str:str]]):
         for cred_pk, cred_id, cred_pw in user_list:
@@ -90,11 +101,10 @@ class CrawlTriggerDispatcher:
             )
 
     def run(self, crawl_pk) -> Union[int | str]:
-        work_id = insert_orm(WorkInfo, {'work_sta': WorkStatusCode.pending}, True)
-        insert_orm(WorkInfoHistory, {'work_sta': WorkStatusCode.pending})
+        work_id = insert_work_status({'work_sta': WorkStatusCode.pending})
 
         if self.target_code == "1":
-            self.target_code(work_id,crawl_pk)
+            self.target_code(work_id, crawl_pk)
 
         return work_id
 

@@ -5,7 +5,7 @@ from sqlalchemy.orm import scoped_session
 
 import ciftag.utils.logger as logger
 from ciftag.settings import engine, Session
-from ciftag.integrations.redis_lock import RedisManager
+from ciftag.integrations.redis import RedisManager
 
 
 logs = logger.Logger()

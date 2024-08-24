@@ -21,9 +21,9 @@ def get_cred_info_service(user_pk: int):
 
 
 def add_cred_info_service(request):
-    result = insert_orm(CredentialInfo, request)
+    result = insert_orm(CredentialInfo, request, True)
 
-    return result.id
+    return result
 
 
 def put_cred_info_service(user_pk: int, cred_pk: int, request):

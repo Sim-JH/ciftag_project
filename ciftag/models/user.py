@@ -11,7 +11,7 @@ class UserInfo(Base, TimestampMixin):
     __tablename__ = "user_info"
 
     id = Column(Integer, primary_key=True)  # 인덱스
-    user_id = Column(String, unique=True)  # 사용자 ID
+    user_ident = Column(String, unique=True)  # 사용자 ID
     user_pw = Column(String)  # 사용자 PW
     user_name = Column(String)  # 사용자 이름
     auth_code = Column(Enum(UserRoleCode))  # 사용자 권한 코드
@@ -30,7 +30,7 @@ class UserHistClass(Base, TimestampMixin):
         Integer,
         ForeignKey("user_info.id", onupdate="CASCADE"),
     )  # 사용자 정보 ID (FK)
-    user_id = Column(String, unique=True)  # 사용자 ID
+    user_ident = Column(String, unique=True)  # 사용자 ID
     user_pw = Column(String)  # 사용자 PW
     user_name = Column(String)  # 사용자 이름
     auth_code = Column(Enum(UserRoleCode))  # 사용자 권한 코드

@@ -15,7 +15,7 @@ class CredentialInfo(Base, TimestampMixin):
         Integer,
         ForeignKey("user_info.id", onupdate="CASCADE"),
     )  # 사용자 정보 ID (FK)
-    cred_id = Column(String)  # 인증 ID
+    cred_ident = Column(String)  # 인증 ID
     cred_pw = Column(String)  # 인증 PW
     target_code = Column(Enum(CrawlTargetCode))  # 대상 사이트 코드
     status_code = Column(Enum(StatusCode))  # 계정 상태 코드

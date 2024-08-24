@@ -30,3 +30,11 @@ class RedisManager:
         have_lock = lock.acquire(blocking=blocking, blocking_timeout=blocking_timeout)
 
         return lock, have_lock
+
+    def check_set_form_redis(self, name: str, val: str) -> bool:
+        """set 존재 시 1, 없을 시 0 -> bool로 변환하여 반환"""
+        return bool(self.redis.sismember(name, val))
+
+    def add_set_to_redis(self, name: str, val: str):
+        """redis set 추가"""
+        self.redis.sadd(name, val)

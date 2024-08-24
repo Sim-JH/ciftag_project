@@ -24,7 +24,7 @@ def get_crawl_info_with_service(
 
 def add_crawl_info_with_trigger(request):
     # 작업 정보 등록
-    crawl_pk = insert_orm(CrawlRequestInfo, request)
+    crawl_pk = insert_orm(CrawlRequestInfo, request, True)
 
     data = request.dict()
     dbm = DBManager()
@@ -33,8 +33,8 @@ def add_crawl_info_with_trigger(request):
     with dbm.create_session() as session:
         records = session.query(
             CredentialInfo.id,
-            CredentialInfo.user_id,
-            CredentialInfo.user_pw,
+            CredentialInfo.cred_ident,
+            CredentialInfo.cred_pw,
             CredentialInfo.status_code
         ).filter(
             CredentialInfo.user_pk == data['user_pk']

@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 
 class CredRequestBase(BaseModel):
-    cred_id: str = Field(None, title="인증 ID")
+    cred_ident: str = Field(None, title="인증 ID")
     cred_pw: str = Field(None, title="인증 PW")
     status_code: enums.StatusCode = Field(
         '1',
