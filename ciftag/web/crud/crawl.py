@@ -77,7 +77,8 @@ async def add_crawl_info_with_trigger(request):
 
     # 작업 실행
     dispatcher = CrawlTriggerDispatcher(data)
-    dispatcher.set_cred_info(active_list)
+    # aws sqs 이용 시 비번 crypto
+    dispatcher.set_cred_info(active_list, crypto=True if data['run_on'] == enums.RunOnCode.aws else False)
     work_id = dispatcher.run(crawl_pk)
     update_orm(CrawlRequestInfo, 'id', crawl_pk, {'triggered': True})
 

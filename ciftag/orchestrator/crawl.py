@@ -41,16 +41,18 @@ class CrawlTriggerDispatcher:
         return result
 
     def _trigger_pinterest(self, work_id: int, crawl_pk: int):
-        insert_orm(
+        pint_id = insert_orm(
             PinterestCrawlInfo,
             {
                 'work_pk': work_id,
                 'crawl_pk': crawl_pk,
                 'cred_pk_list': '/'.join(self.cred_pk_list),
                 'tags': self.body['tags'],
+                'cnt': self.body['cnt'],
                 'hits': 0,
                 'downloads': 0
-            }
+            },
+            returning=True
         )
 
         tasks = []
@@ -59,9 +61,7 @@ class CrawlTriggerDispatcher:
             # 현재 test 용도 TODO 수식 개선
             worker = 5  # task queue의 concurrency는 10으로 설정
             segments = self._cal_segment(worker=worker)
-            os.environ['crypto_key'] = self.crypto_key.decode()  # 현재 celery는 동일 환경 실행
 
-            success_s = app.signature("ciftag.callbacks.pinterest_success")
             error_s = app.signature("ciftag.callbacks.pinterest_fail")
 
             for idx, goal_cnt in enumerate(segments):
@@ -69,12 +69,13 @@ class CrawlTriggerDispatcher:
                     "ciftag.task.pinterest_run",
                     kwargs={
                         'work_id': work_id,
+                        'pint_id': pint_id,
                         'cred_info_list': self.cred_info_list,
                         'goal_cnt': int(goal_cnt),
                         'data': convert_enum_in_data(self.body)  # enum 직렬화
                     }
                 ).set(queue='task')
-                tasks.append(chain(run_s, success_s).on_error(error_s))
+                tasks.append(run_s.on_error(error_s))
 
             # 작업 모음 실행 및 완료 후 실행될 작업 추가 (run_group = chord(tasks)(callback))
             # aws 에선 모든 컨테이너 종료 후 실행 작업 # TODO redis set 남은 것 확인 & airflow 트리거
@@ -83,7 +84,8 @@ class CrawlTriggerDispatcher:
                 app.signature(
                     "ciftag.task.pinterest_after",
                     kwargs={
-                        'work_id': work_id
+                        'work_id': work_id,
+                        'pint_id': pint_id,
                     }
                 )
             )
@@ -93,13 +95,13 @@ class CrawlTriggerDispatcher:
 
         update_work_status(work_id, {'work_sta': enums.WorkStatusCode.trigger})
 
-    def set_cred_info(self, user_list: List[Tuple[str:str]]):
+    def set_cred_info(self, user_list: List[Tuple[str:str]], crypto=True):
         for cred_pk, cred_id, cred_pw in user_list:
             self.cred_pk_list.append(str(cred_pk))
             self.cred_info_list.append(
                 {
                     'cred_id': cred_id,
-                    'cred_pw': self.crypto.encrypt_text(plaintext=cred_pw)
+                    'cred_pw': self.crypto.encrypt_text(plaintext=cred_pw) if crypto else cred_pw
                 }
             )
 

@@ -9,13 +9,14 @@ from playwright.sync_api import sync_playwright
 import ciftag.utils.logger as logger
 import ciftag.utils.crypto as crypto
 from ciftag.models import enums
+# from ciftag.scripts.core import
 from ciftag.scripts.common import update_task_status
+from ciftag.scripts.pinterest import insert_pint_result
 from ciftag.services.pinterest import PAGETYPE
 from ciftag.services.pinterest.wrapper import execute_with_logging
 from ciftag.services.pinterest import (
     login,
     search,
-    download
 )
 
 
@@ -25,21 +26,33 @@ USERAGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 
 def run(
         task_id: int,
         work_id: int,
+        pint_id: int,
         cred_info: Dict[str, Any],
         runner_identify: str,
         goal_cnt: int,
         data: Dict[str, Any],
         headless: bool = True
 ):
+    """ 핀터레스트 크롤러
+    :param task_id: 내부 작업 ID
+    :param work_id: 외부 작업 ID
+    :param pint_id: 수행 정보 ID
+    :param cred_info: 계정 정보
+    :param run_on: 수행 환경
+    :param runner_identify: 처리기 식별자
+    :param goal_cnt: 목표 수량
+    :param data: 메타 데이터
+    :param headless: 헤드리스 모드 여부
+    """
+    start_time = time.time()
     logs = logger.Logger(log_dir=PAGETYPE, log_name=runner_identify)
-    # TODO 계정 상태 업데이트, task 상태 업데이트, 결과 db 적재,
+    logs.log_data(f'--- 작업 시작 task id: {task_id}')
     update_task_status(task_id, {'task_sta': enums.TaskStatusCode.run.name})
 
-    cred_id = data['cred_id']
-    cred_pw = data['cred_pw']
-    tag: str = data['tags'].pop()  # 핀터레스트는 구조 상 단일 태그
-    max_pins: int = int(data['max_pins'])  # 큐 올릴 시, 목표하는 갯수를 동시에 실행될 컨테이너 만큼 균등하게 나눠서 올리기
-    retry = int(data['retry']) if data.get('retry') else 1
+    cred_id = cred_info['cred_id']
+    cred_pw = cred_info['cred_pw']
+    run_on = data['run_on']
+    tag: str = data['tags']  # 핀터레스트는 구조 상 단일 태그
 
     # 이미지 크기 범위 지정 시
     min_width = int(data['min_width']) if int(data.get('min_width')) else None
@@ -48,52 +61,61 @@ def run(
     # redis set name
     redis_name = f"{PAGETYPE}_{work_id}"
 
+    logs.log_data(f'cred_info: {cred_info}',)
+    logs.log_data(f'crypto_key: {os.getenv('crypto_key')}',)
+    logs.log_data(f'cred_pw: {'cred_pw'}')
     # pw 암호 키 존재 시
     if crypto_key := os.getenv('crypto_key'):
         ciftag_crypto = crypto.CiftagCrypto()
         ciftag_crypto.load_key(crypto_key.encode())
         cred_pw = ciftag_crypto.decrypt_text(cred_pw)
+    logs.log_data(f'af cred_pw: {cred_pw}')
 
     # TODO proxy setting
     proxy_settings = {}
     api_proxies = {}
 
     with sync_playwright() as playwright:
-        try:
-            if len(proxy_settings) > 0:
-                browser = playwright.chromium.launch(headless=headless, proxy=proxy_settings)
-            else:
-                browser = playwright.chromium.launch(headless=headless)
+        if len(proxy_settings) > 0:
+            browser = playwright.chromium.launch(headless=headless, proxy=proxy_settings)
+        else:
+            browser = playwright.chromium.launch(headless=headless)
 
-            if headless:
-                context = browser.new_context(user_agent=USERAGENT)
-            else:
-                context = browser.new_context()
+        if headless:
+            context = browser.new_context(user_agent=USERAGENT)
+        else:
+            context = browser.new_context()
 
-            api_context = context.request
+        api_context = context.request
 
-            # 로그인 시도
-            result = execute_with_logging(login.login, logs, context, cred_id, cred_pw)
+        # 로그인 시도
+        result = execute_with_logging(login.login, logs, context, task_id, cred_id, cred_pw)
 
-            if not result['result']:
-                return result
+        if not result['result']:
+            return result
 
-            # 이미지 리스트 추출
-            result = execute_with_logging(
-                search.search, logs, result['page'], redis_name, tag, max_pins, min_width, max_width
-            )
+        # 이미지 리스트 추출
+        result = execute_with_logging(
+            search.search, logs, task_id, result['page'], redis_name, tag, goal_cnt, min_width, max_width
+        )
 
-            if not result['result']:
-                return result
+        if not result['result']:
+            return result
 
-            result = execute_with_logging(
-                download.download_images, logs, result['pins'], cred_id, tag, api_proxies, ext='png'
-            )
+    # 결과 적재
+    update_task_status(task_id, {'task_sta': enums.TaskStatusCode.result.name})
+    pins = result['pins']
 
-            # TODO celery/container 에서 모든 작업 끝난 후 할 것들
-            # redis set 체크
-            # 후처리용 로그
+    for pin in pins:
+        pin.update({
+            'pint_pk', pint_id,
+            'run_on', run_on,
+            'download', False,
+        })
 
-        except Exception as e:
-            traceback_str = ''.join(traceback.format_tb(e.__traceback__))
-            logs.log_data(f"--- {PAGETYPE} Exception: {cred_id} {traceback_str}")
+        insert_pint_result(pin)
+
+    end_dt = time.time()
+    elapsed_time = time.time() - start_time
+
+    return {'result': True, 'hits': len(pins), 'elapsed_time': elapsed_time, 'end_dt': end_dt}

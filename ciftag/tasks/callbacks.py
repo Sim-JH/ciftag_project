@@ -2,39 +2,24 @@ from datetime import datetime
 from typing import Any, Dict
 
 import ciftag.utils.logger as logger
-from ciftag.settings import TIMEZONE
+from ciftag.utils.converter import get_traceback_str
 from ciftag.celery_app import app
-from ciftag.models import enums
-from ciftag.scripts.common import update_task_status
 
 
-logs = logger.Logger('celery')
+logs = logger.Logger('callback')
 
 
+# 미사용으로 변경. 추후 chain 작업 필요시 고려
 @app.task(name='ciftag.callbacks.pinterest_success')
 def task_success_callback(response: Dict[str, Any]):
     logs.log_data(f'response: {response}')
-    # task_id = response['task_id']
-    # get_cnt = response['get_cnt']
-    #
-    # update_task_status(task_id, {
-    #     'task_sta': enums.TaskStatusCode.success.name,
-    #     'get_cnt': get_cnt,
-    #     'end_dt': datetime.now(TIMEZONE)
-    # })
-    #
 
+
+# on_error
 @app.task(name='ciftag.callbacks.pinterest_fail')
 def task_fail_callback(request, ext, traceback):
-    logs.log_data(f'ext: {ext}')
-    logs.log_data(f'traceback: {traceback}')
-    # task_id = request.kwargs.get('task_id')
-    # get_cnt = request.kwargs.get('get_cnt')
-    #
-    # update_task_status(task_id, {
-    #     'task_sta': enums.TaskStatusCode.failed.name,
-    #     'get_cnt': get_cnt,
-    #     'msg': str(ext),
-    #     'traceback': traceback,
-    #     'end_dt': datetime.now(TIMEZONE)
-    # })
+    logs.log_data(f"=======================================================================\n"
+                  f"--- Task Error: {ext}\n"
+                  f"-- Celery Meta: {request.id}/{request.task} Retry: {request.retries} \n"
+                  f"-- Traceback \n"
+                  f"{get_traceback_str(traceback)}")

@@ -57,6 +57,8 @@ class TaskInfo(Base):
     task_sta = Column(Enum(enums.TaskStatusCode))  # 내부 작업 상태
     get_cnt = Column(Integer)  # 크롤링 한 이미지 정보 갯수  
     goal_cnt = Column(Integer)  # 할당 받은 이미지 정보 갯수
+    msg = Column(String, default=None)  # 에러 메시지
+    traceback = Column(Text, default=None)  # 추적 로그
     start_dt = Column(DateTime(timezone=True), default=lambda: datetime.now(TIMEZONE))  # 시작 시간
     end_dt = Column(DateTime(timezone=True), nullable=True)  # 종료 시간
 

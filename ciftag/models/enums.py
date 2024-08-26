@@ -48,8 +48,8 @@ class WorkStatusCode(Enum):
     # 작업 실행 관련
     pending = "100"  # 대기
     trigger = "110"  # 트리거 (push queue)
-    download = "120"  # 실제 이미지 저장
-    postproc = "130"  # 후처리
+    postproc = "120"  # 실제 이미지 저장
+    download = "130"  # 후처리
 
     # 작업 완료 관련
     success = "202"  # 크롤링 작업 성공

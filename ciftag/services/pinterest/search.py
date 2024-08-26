@@ -2,6 +2,8 @@ import time
 import re
 import traceback
 
+from ciftag.models import enums
+from ciftag.scripts.common import update_task_status
 from ciftag.integrations.redis import RedisManager
 from ciftag.services.pinterest import PAGETYPE
 
@@ -11,8 +13,11 @@ def get_image_width(url):
     return int(_match.group(1)) if _match else 0
 
 
-def search(logs, page, redis_name, tag, max_pins, min_width=None, max_width=None):
+def search(logs, task_id, page, redis_name, tag, goal_cnt, min_width=None, max_width=None):
     logs.log_data(f'--- {PAGETYPE} 검색 시작: {tag}')
+    # 상태 업로드
+    update_task_status(task_id, {'task_sta': enums.TaskStatusCode.search.name})
+
     page.goto(f"https://www.pinterest.com/search/pins/?q={tag}")
     page.wait_for_load_state("networkidle")
     page.wait_for_timeout(3*600)
@@ -22,7 +27,7 @@ def search(logs, page, redis_name, tag, max_pins, min_width=None, max_width=None
     pins = []
     last_height = page.evaluate("document.body.scrollHeight")
 
-    while len(pins) < max_pins:
+    while len(pins) < goal_cnt:
         # 새로운 핀 추출 (중복 제외)
         new_pins = page.evaluate('''() => {
             const pinData = [];
@@ -46,12 +51,12 @@ def search(logs, page, redis_name, tag, max_pins, min_width=None, max_width=None
         }''')
 
         for title, thumbnail_url, link in new_pins:
-            if len(pins) >= max_pins:
+            if len(pins) >= goal_cnt:
                 _continue_flag = False
                 break
 
             # 이미 크롤링 된 link는 pass
-            if redis_m.check_set_form_redis(work_identity, link):
+            if redis_m.check_set_form_redis(redis_name, link):
                 continue
 
             try:
@@ -109,16 +114,16 @@ def search(logs, page, redis_name, tag, max_pins, min_width=None, max_width=None
                     });
                 }''', image_url)
 
-                img_width = img_dimensions['width']
-                img_height = img_dimensions['height']
+                height = img_dimensions['height']
+                width = img_dimensions['width']
 
                 pins.append({
                     "thumbnail_url": thumbnail_url,
                     "image_url": image_url,
                     "title": title,
                     "detail_link": link,
-                    "img_width": img_width,
-                    "img_height": img_height
+                    "height": height,
+                    "width": width,
                 })
 
                 # 중복 크롤링 방지
@@ -126,7 +131,6 @@ def search(logs, page, redis_name, tag, max_pins, min_width=None, max_width=None
 
             except Exception as e:
                 traceback_str = ''.join(traceback.format_tb(e.__traceback__))
-                print(f'Error: {e} {traceback_str}')
                 continue
 
             finally:
@@ -137,7 +141,7 @@ def search(logs, page, redis_name, tag, max_pins, min_width=None, max_width=None
             page.wait_for_load_state("networkidle")
             time.sleep(5)
 
-            # 페이지 끝에 도달했는지 확인 # TODO 마지막 페이지 확인 방식 개선 필요 [max pins에 충족되도록/더불어 중복 크롤링도 해결필요(redis고려)]
+            # 페이지 끝에 도달했는지 확인
             new_height = page.evaluate("document.body.scrollHeight")
 
             # 마지막 페이지가 아니면 스크롤

@@ -37,9 +37,7 @@ async def post_crawl_image(
     # TODO min_height/max_height/min_width/max_width는 비고로
     # TODO target_codesms 여러개 가능
     # limit_request(user_pk)  # TODO to many request 구현하기
-    # tag # TODO tag 처리 구현 구현하기
     return await add_crawl_info_with_trigger(request)
-
 
 
 # def limit_request(user_pk: str):

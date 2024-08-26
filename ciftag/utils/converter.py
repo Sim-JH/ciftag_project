@@ -1,3 +1,5 @@
+import traceback
+
 from enum import Enum
 from typing import Dict, Any
 
@@ -20,3 +22,17 @@ def convert_enum_in_data(data: Dict[str, Any]) -> Dict[str, Any]:
             converted_data[key] = value
 
     return converted_data
+
+
+def get_traceback_str(traceback_obj=None) -> str:
+    """traceback most recent call last -> most recent call first 조정 및 출력 포멧 조정"""
+    if traceback_obj is None:
+        lines = traceback.format_exc().strip().split('\n')
+    else:
+        if isinstance(traceback_obj, str):
+            lines = traceback_obj.strip().split('\n')
+        else:
+            lines = ''.join(traceback.format_tb(traceback_obj)).strip().split('\n')
+
+    return '\n'.join(lines)
+

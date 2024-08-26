@@ -47,6 +47,7 @@ def update_task_status(task_id: int, args: Dict[str, Any]):
     task_sql += f" WHERE id = {task_id} RETURNING *"
 
     _, task_row = save_sql(task_sql, args=args, returning=True)
+
     task_row_dict = {
         'task_pk': task_row[0],
         'work_pk': task_row[1],
@@ -54,11 +55,15 @@ def update_task_status(task_id: int, args: Dict[str, Any]):
         'task_sta': task_row[4],
         'get_cnt': task_row[5],
         'goal_cnt': task_row[6],
+        'msg': task_row[7],
+        'traceback': task_row[8],
+        'start_dt': task_row[9],
+        'end_dt': task_row[10],
         'created_at': datetime.now(TIMEZONE)
     }
 
-    task_h_sql = f"""INSERT INTO task_info_hist (task_pk, work_pk, runner_identify, task_sta, get_cnt, goal_cnt, created_at) 
-                          VALUES(:task_pk, :work_pk, :runner_identify, :task_sta, :get_cnt, :goal_cnt, :created_at)"""
+    task_h_sql = f"""INSERT INTO task_info_hist (task_pk, work_pk, runner_identify, task_sta, get_cnt, goal_cnt, msg, traceback, start_dt, end_dt, created_at) 
+                          VALUES(:task_pk, :work_pk, :runner_identify, :task_sta, :get_cnt, :goal_cnt, :msg, :traceback, :start_dt, :end_dt, :created_at)"""
 
     save_sql(task_h_sql, args=task_row_dict)
 

@@ -8,16 +8,20 @@ from subprocess import check_output
 from celery.exceptions import MaxRetriesExceededError
 
 from ciftag.settings import TIMEZONE
+import ciftag.utils.logger as logger
+from ciftag.utils.converter import get_traceback_str
 from ciftag.exceptions import CiftagWorkException
 from ciftag.celery_app import app
 from ciftag.models import enums
 from ciftag.scripts.common import insert_task_status, update_task_status
 from ciftag.services.pinterest.run import run
 
+logs = logger.Logger(log_dir='Pinterest')
+
 
 @app.task(bind=True, name="ciftag.task.pinterest_run", max_retries=3, default_retry_delay=30)
 def run_pinterest(
-        self, work_id: int, cred_info_list: List[Dict[str, Any]], goal_cnt: int, data: Dict[str, Any]
+        self, work_id: int, pint_id: int, cred_info_list: List[Dict[str, Any]], goal_cnt: int, data: Dict[str, Any]
 ) -> Dict[str, Any]:
     """핀터레스트 크롤러 실행"""
     # 내부 작업 식별자 생성 및 내부 작업 로그 등록
@@ -37,35 +41,79 @@ def run_pinterest(
     queue_meta = {
         'work_pk': work_id,
         'runner_identify': runner_identify,
-        'body': json.dumps(data),
+        'body': json.dumps(data, ensure_ascii=False),
         'task_sta': enums.TaskStatusCode.load.name,  # sql 상에선 string으로 들어가야 함
         'get_cnt': 0,
         'goal_cnt': goal_cnt,
         'start_dt': datetime.now(TIMEZONE)
     }
 
+    # 내부 작업 로그 insert
     task_id = insert_task_status(queue_meta)
 
-    # TODO cred_info 할당 및 재시도 관련 로직
-    # TODO 작업 실행 관련 최상위 try except. 여기서 에러 처리 관리. on_error에 task_id 전달해줘야함
-    # try:
+    # task_id를 다른 콜백에서 접근 가능하게 추가
+    self.request.task_id = task_id
+
+    # TODO cred_info 분할 할당 및 재시도 관련 로직 & 에러에 따라 계정 상태 업데이트
     cred_info = cred_info_list[0]
-    run(task_id, work_id, cred_info, runner_identify, goal_cnt, data)
-    # except Exception as exc:
-    #     retries = self.request.retries
-    #     try:
-    #         self.retry(exc=exc, kwargs={'task_id': task_id})
-    #     except MaxRetriesExceededError:
-    #         # 재시도 횟수를 초과했을 때
-    #         print("Max retries exceeded.")
-    #
-    #     raise CiftagWorkException('Error On Local Process',  enums.TaskStatusCode.failed, task_id=task_id) from exc
-    #
-    # return {"task_id": task_id}
-    #
+
+    try:
+        result = run(task_id, work_id, pint_id, cred_info, runner_identify, goal_cnt, data)
+
+        if not result['result']:
+            if result['message'] == "Timeout":
+                update_task_status(task_id, {'task_sta': enums.TaskStatusCode.retry.name})
+                self.retry()
+            else:
+                update_task_status(task_id, {
+                    'task_sta': enums.TaskStatusCode.failed.name,
+                    'msg': f'{result['message']} task_id: {task_id}',
+                    'traceback': result.get('traceback'),
+                })
+                raise CiftagWorkException(
+                    f'-- {result['message']} task_id: {task_id}', 400
+                )
+
+        update_task_status(task_id, {'task_sta': enums.TaskStatusCode.success.name, 'end_dt': result['end_dt']})
+        return result
+
+    except CiftagWorkException:
+        # 직접 raise한 exception
+        raise
+
+    except MaxRetriesExceededError:
+        # 재시도 횟수를 초과했을 때
+        update_task_status(task_id, {
+            'task_sta': enums.TaskStatusCode.failed.name,
+            'msg': f'Max retry over task_id: {task_id}',
+        })
+        raise CiftagWorkException(
+            f'-- Max retry over task_id: {task_id}', 400
+        )
+
+    except Exception as exc:
+        update_task_status(task_id, {
+            'task_sta': enums.TaskStatusCode.failed.name,
+            'msg': f'UnExpect Exception in Pinterest Local task_id: {task_id}',
+            'traceback': get_traceback_str(exc.__traceback__),
+        })
+        raise CiftagWorkException(
+            f'-- UnExpect Exception in Pinterest Local task_id: {task_id}', 400
+        )
+
 
 @app.task(bind=True, name="ciftag.task.pinterest_after")
-def after_pinterest(work_id: int) -> Dict[str, Any]:
-    #pinterest 테이블 업데이트
-    #work테이블 업데이트
-    pass
+def after_pinterest(self, results: List[Dict[str, Any]], work_id: int, pint_id: int):
+    from ciftag.models import PinterestCrawlInfo, enums
+    from ciftag.web.crud.core import update_orm
+    from ciftag.web.crud.common import update_work_status
+    # 외부 작업 로그 update
+    update_work_status(work_id, {'work_sta': enums.WorkStatusCode.postproc})
+
+    # pint info update
+    for result in results:
+        del result['end_dt']
+        update_orm(PinterestCrawlInfo, 'id', pint_id, result)
+
+    # 외부 작업 로그 update
+    update_work_status(work_id, {'work_sta': enums.WorkStatusCode.success})

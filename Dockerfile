@@ -17,6 +17,7 @@ RUN apt-get update && \
     unzip \
     zip \
     vim \
+    curl \
     iputils-ping \
     httping \
     locales \

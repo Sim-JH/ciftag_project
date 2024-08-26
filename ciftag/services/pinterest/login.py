@@ -1,14 +1,17 @@
 import os
 import time
 
+from ciftag.models import enums
+from ciftag.scripts.common import update_task_status
 from ciftag.services.pinterest import PAGETYPE
 
 
-def login(logs, context, cred_id, cred_pw):
+def login(logs, context, task_id, cred_id, cred_pw):
     logs.log_data(f'--- {PAGETYPE} 로그인 시작: {cred_id}')
-    dir_path = f""
+    # 상태 업로드
+    update_task_status(task_id, {'task_sta': enums.TaskStatusCode.login.name})
 
-    # 리소스 최적화를 위해 login 관련 요청에 대해서만 진행
+    # 리소스 최적화를 위해 불필요한 리소스 스킵
     def handle_route(route):
         if route.request.method != "GET":
             if route.request.method == "POST" and route.request.url.find("/login"):
@@ -37,7 +40,6 @@ def login(logs, context, cred_id, cred_pw):
             page.screenshot(path=f'{os.path.dirname(logs.log_path)}/goto_tmp.png')  # goto timeout 발생 체크
             break
         except Exception as e:
-            print('Exception', e)
             if isinstance(e, TimeoutError):
                 logs.log_data(f'{cred_id} {PAGETYPE} login page Timeout 진입 재시도')
             else:
