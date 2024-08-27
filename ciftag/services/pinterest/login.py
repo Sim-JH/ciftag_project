@@ -7,7 +7,7 @@ from ciftag.services.pinterest import PAGETYPE
 
 
 def login(logs, context, task_id, cred_id, cred_pw):
-    logs.log_data(f'--- {PAGETYPE} 로그인 시작: {cred_id}')
+    logs.log_data(f'--- Task-{task_id} {PAGETYPE} 로그인 시작: {cred_id}')
     # 상태 업로드
     update_task_status(task_id, {'task_sta': enums.TaskStatusCode.login.name})
 
@@ -58,6 +58,6 @@ def login(logs, context, task_id, cred_id, cred_pw):
     page.click('button[type="submit"]')
     page.wait_for_load_state("networkidle")
     page.wait_for_timeout(5000)
-    time.sleep(5)
+    time.sleep(3)
 
     return {"result": True, "page": page}

@@ -32,7 +32,12 @@ def get_traceback_str(traceback_obj=None) -> str:
         if isinstance(traceback_obj, str):
             lines = traceback_obj.strip().split('\n')
         else:
-            lines = ''.join(traceback.format_tb(traceback_obj)).strip().split('\n')
+            lines = ''.join(traceback.format_exception(None, None, traceback_obj)).strip().split('\n')
 
-    return '\n'.join(lines)
+    # 마지막 줄(오류 메시지 부분)을 최상위로
+    error_message = lines[-1]
+    traceback_lines = lines[:-1]
+    formatted_traceback = [error_message] + traceback_lines
+
+    return '\n'.join(formatted_traceback)
 

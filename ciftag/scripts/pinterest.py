@@ -1,6 +1,9 @@
 from typing import Dict, Any
 
+import ciftag.utils.logger as logger
 from ciftag.scripts.core import save_sql
+
+logs = logger.Logger(log_dir='sql')
 
 
 def insert_pint_result(args: Dict[str, Any]):
@@ -13,7 +16,7 @@ def insert_pint_result(args: Dict[str, Any]):
                       thumbnail_url,
                       image_url,
                       title,
-                      detail_link,
+                      detail_link
                   ) 
                   VALUES (
                       :pint_pk, 
@@ -24,7 +27,7 @@ def insert_pint_result(args: Dict[str, Any]):
                       :thumbnail_url,
                       :image_url,
                       :title,
-                      :detail_link,
+                      :detail_link
                   ) 
               RETURNING id"""
 

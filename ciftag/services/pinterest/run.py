@@ -1,15 +1,15 @@
 import os
 import time
-import json
-import traceback
+import random
+from datetime import datetime
 from typing import Any, Dict, Union
 
 from playwright.sync_api import sync_playwright
 
 import ciftag.utils.logger as logger
 import ciftag.utils.crypto as crypto
+from ciftag.settings import TIMEZONE
 from ciftag.models import enums
-# from ciftag.scripts.core import
 from ciftag.scripts.common import update_task_status
 from ciftag.scripts.pinterest import insert_pint_result
 from ciftag.services.pinterest import PAGETYPE
@@ -38,12 +38,12 @@ def run(
     :param work_id: 외부 작업 ID
     :param pint_id: 수행 정보 ID
     :param cred_info: 계정 정보
-    :param run_on: 수행 환경
     :param runner_identify: 처리기 식별자
     :param goal_cnt: 목표 수량
     :param data: 메타 데이터
     :param headless: 헤드리스 모드 여부
     """
+    time.sleep(random.randrange(1, 10))
     start_time = time.time()
     logs = logger.Logger(log_dir=PAGETYPE, log_name=runner_identify)
     logs.log_data(f'--- 작업 시작 task id: {task_id}')
@@ -61,15 +61,11 @@ def run(
     # redis set name
     redis_name = f"{PAGETYPE}_{work_id}"
 
-    logs.log_data(f'cred_info: {cred_info}',)
-    logs.log_data(f'crypto_key: {os.getenv('crypto_key')}',)
-    logs.log_data(f'cred_pw: {'cred_pw'}')
     # pw 암호 키 존재 시
     if crypto_key := os.getenv('crypto_key'):
         ciftag_crypto = crypto.CiftagCrypto()
         ciftag_crypto.load_key(crypto_key.encode())
         cred_pw = ciftag_crypto.decrypt_text(cred_pw)
-    logs.log_data(f'af cred_pw: {cred_pw}')
 
     # TODO proxy setting
     proxy_settings = {}
@@ -102,20 +98,24 @@ def run(
         if not result['result']:
             return result
 
+        context.close()
+        browser.close()
+
     # 결과 적재
-    update_task_status(task_id, {'task_sta': enums.TaskStatusCode.result.name})
     pins = result['pins']
+    logs.log_data(f'--- Task-{task_id} {PAGETYPE} 결과 적재')
+    update_task_status(task_id, {'task_sta': enums.TaskStatusCode.result.name})
 
     for pin in pins:
         pin.update({
-            'pint_pk', pint_id,
-            'run_on', run_on,
-            'download', False,
+            'pint_pk': pint_id,
+            'run_on': run_on['name'],
+            'download': False
         })
 
         insert_pint_result(pin)
 
-    end_dt = time.time()
+    end_dt = datetime.now(TIMEZONE)
     elapsed_time = time.time() - start_time
 
     return {'result': True, 'hits': len(pins), 'elapsed_time': elapsed_time, 'end_dt': end_dt}

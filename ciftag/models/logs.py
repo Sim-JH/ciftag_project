@@ -77,7 +77,7 @@ class TaskInfoHist(Base):
         ForeignKey("task_info.id")
     )  # 사용자 정보 ID (FK)
     work_pk = Column(Integer)  # 작업 정보 ID (FK)
-    runner_identify = Column(String)  # 현재 처리기 [worke or continaer] (work_id + host_name + real ip + time)
+    runner_identify = Column(String)  # 현재 처리기 work_id + (worker: celery task id/fargate: host_name + real ip) + time
     task_sta = Column(Enum(enums.TaskStatusCode))  # 내부 작업 상태
     get_cnt = Column(Integer)  # 크롤링 한 이미지 정보 갯수
     goal_cnt = Column(Integer)  # 할당 받은 이미지 정보 갯수

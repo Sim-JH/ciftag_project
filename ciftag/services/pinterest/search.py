@@ -1,6 +1,6 @@
 import time
+import random
 import re
-import traceback
 
 from ciftag.models import enums
 from ciftag.scripts.common import update_task_status
@@ -14,7 +14,7 @@ def get_image_width(url):
 
 
 def search(logs, task_id, page, redis_name, tag, goal_cnt, min_width=None, max_width=None):
-    logs.log_data(f'--- {PAGETYPE} 검색 시작: {tag}')
+    logs.log_data(f'--- Task-{task_id} {PAGETYPE} 검색 시작: {tag}')
     # 상태 업로드
     update_task_status(task_id, {'task_sta': enums.TaskStatusCode.search.name})
 
@@ -55,16 +55,20 @@ def search(logs, task_id, page, redis_name, tag, goal_cnt, min_width=None, max_w
                 _continue_flag = False
                 break
 
-            # 이미 크롤링 된 link는 pass
+            time.sleep(random.randrange(1, 3))
+            # 이미 체크한 link는 pass
             if redis_m.check_set_form_redis(redis_name, link):
                 continue
+
+            # 중복 크롤링 방지
+            redis_m.add_set_to_redis(redis_name, link)
 
             try:
                 # 상세 페이지로 이동하여 원본 이미지 URL 추출
                 page.goto(link)
                 page.wait_for_load_state('domcontentloaded')
                 page.wait_for_selector("img[src], img[srcset]")
-                time.sleep(10)
+                time.sleep(3)
 
                 original_img_element = page.query_selector("img[src], img[srcset]")
 
@@ -75,6 +79,8 @@ def search(logs, task_id, page, redis_name, tag, goal_cnt, min_width=None, max_w
                 src_set = original_img_element.get_attribute("srcset")
                 if not src_set:
                     src_set = original_img_element.get_attribute("src")
+                    if not src_set:
+                        raise ValueError("src_set Not Found")
 
                 image_urls = [url.split(" ")[0] for url in src_set.split(",")]
 
@@ -126,15 +132,12 @@ def search(logs, task_id, page, redis_name, tag, goal_cnt, min_width=None, max_w
                     "width": width,
                 })
 
-                # 중복 크롤링 방지
-                redis_m.add_set_to_redis(redis_name, link)
-
             except Exception as e:
-                traceback_str = ''.join(traceback.format_tb(e.__traceback__))
+                logs.log_data(f'Error On Searching Continue: {e}')
                 continue
 
             finally:
-                time.sleep(10)
+                time.sleep(random.randrange(1, 3))
 
         if _continue_flag:
             page.go_back()
@@ -149,7 +152,7 @@ def search(logs, task_id, page, redis_name, tag, goal_cnt, min_width=None, max_w
                 break
             else:
                 page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                time.sleep(2*60)  # 새 콘텐츠 로딩 대기
+                time.sleep(60)  # 새 콘텐츠 로딩 대기
                 last_height = new_height
 
     return {"result": True, "pins": pins}

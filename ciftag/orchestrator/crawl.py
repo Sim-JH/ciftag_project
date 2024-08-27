@@ -1,9 +1,7 @@
 import os
 from typing import Any, Dict, List, Tuple, Union
 
-from celery import chain, group, chord
-
-from ciftag.exceptions import CiftagWorkException
+from celery import chain, group
 
 from ciftag.celery_app import app
 from ciftag.utils.crypto import CiftagCrypto
@@ -37,6 +35,8 @@ class CrawlTriggerDispatcher:
 
         for i in range(remainder):
             result[i] += 1
+
+        result = [value for value in result if value > 0]
 
         return result
 
@@ -77,18 +77,18 @@ class CrawlTriggerDispatcher:
                 ).set(queue='task')
                 tasks.append(run_s.on_error(error_s))
 
-            # 작업 모음 실행 및 완료 후 실행될 작업 추가 (run_group = chord(tasks)(callback))
+            # 작업 모음 실행 및 완료 후 실행될 작업 추가 (chord(tasks)(callback)은 모든 작업 성공이 보장되어야함)
+            after_task_s = app.signature(
+                "ciftag.task.pinterest_after",
+                kwargs={
+                    'work_id': work_id,
+                    'pint_id': pint_id,
+                }
+            )
             # aws 에선 모든 컨테이너 종료 후 실행 작업 # TODO redis set 남은 것 확인 & airflow 트리거
             run_group = group(*tasks)
-            chord(run_group)(
-                app.signature(
-                    "ciftag.task.pinterest_after",
-                    kwargs={
-                        'work_id': work_id,
-                        'pint_id': pint_id,
-                    }
-                )
-            )
+            run_workflow = chain(run_group, after_task_s)
+            run_workflow.apply_async()
 
         elif self.run_on == enums.RunOnCode.aws:
             pass

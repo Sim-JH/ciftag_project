@@ -1,5 +1,6 @@
 import os
 import time
+import random
 import json
 from datetime import datetime
 from typing import Any, Dict, List
@@ -19,24 +20,14 @@ from ciftag.services.pinterest.run import run
 logs = logger.Logger(log_dir='Pinterest')
 
 
-@app.task(bind=True, name="ciftag.task.pinterest_run", max_retries=3, default_retry_delay=30)
+@app.task(bind=True, name="ciftag.task.pinterest_run", max_retries=0)
 def run_pinterest(
         self, work_id: int, pint_id: int, cred_info_list: List[Dict[str, Any]], goal_cnt: int, data: Dict[str, Any]
 ) -> Dict[str, Any]:
     """핀터레스트 크롤러 실행"""
-    # 내부 작업 식별자 생성 및 내부 작업 로그 등록
-    host_name = check_output(["hostname"]).strip().decode("utf-8").replace("-", ".")
-
-    try:
-        real_ip = (
-            check_output(["curl", "-s", "https://lumtest.com/myip"])
-            .decode("utf-8")
-            .replace("-", ".")
-        )
-    except Exception:
-        real_ip = "ip_error"
-
-    runner_identify = f"{work_id}_{host_name}_{real_ip}_{str(round(time.time() * 1000))}"
+    # 내부 작업 식별자 생성(worker) 및 내부 작업 로그 등록
+    time.sleep(random.randrange(1, 3))
+    runner_identify = f"{work_id}_{self.request.id}_{str(round(time.time() * 1000))}"
 
     queue_meta = {
         'work_pk': work_id,
@@ -56,26 +47,39 @@ def run_pinterest(
 
     # TODO cred_info 분할 할당 및 재시도 관련 로직 & 에러에 따라 계정 상태 업데이트
     cred_info = cred_info_list[0]
+    max_retry = 1  # TODO: param으로 관리
 
     try:
-        result = run(task_id, work_id, pint_id, cred_info, runner_identify, goal_cnt, data)
+        for attempt in range(max_retry):
+            result = run(task_id, work_id, pint_id, cred_info, runner_identify, goal_cnt, data)
 
-        if not result['result']:
+            # 작업 성공
+            if result['result']:
+                update_task_status(task_id, {
+                    'task_sta': enums.TaskStatusCode.success.name,
+                    'end_dt': result['end_dt']
+                })
+                return result
+
+            # 재시도 대상
             if result['message'] == "Timeout":
                 update_task_status(task_id, {'task_sta': enums.TaskStatusCode.retry.name})
-                self.retry()
-            else:
-                update_task_status(task_id, {
-                    'task_sta': enums.TaskStatusCode.failed.name,
-                    'msg': f'{result['message']} task_id: {task_id}',
-                    'traceback': result.get('traceback'),
-                })
-                raise CiftagWorkException(
-                    f'-- {result['message']} task_id: {task_id}', 400
-                )
+                continue
 
-        update_task_status(task_id, {'task_sta': enums.TaskStatusCode.success.name, 'end_dt': result['end_dt']})
-        return result
+            # 실패 대상
+            update_task_status(task_id, {
+                'task_sta': enums.TaskStatusCode.failed.name,
+                'msg': f"{result['message']} (task_id: {task_id})",
+                'traceback': result.get('traceback'),
+            })
+            raise CiftagWorkException(f"-- {result['message']} (task_id: {task_id})", 400)
+
+        # 재시도 횟수를 초과한 경우
+        update_task_status(task_id, {
+            'task_sta': enums.TaskStatusCode.failed.name,
+            'msg': f"Max retry over (task_id: {task_id})",
+        })
+        raise MaxRetriesExceededError
 
     except CiftagWorkException:
         # 직접 raise한 exception
@@ -87,9 +91,7 @@ def run_pinterest(
             'task_sta': enums.TaskStatusCode.failed.name,
             'msg': f'Max retry over task_id: {task_id}',
         })
-        raise CiftagWorkException(
-            f'-- Max retry over task_id: {task_id}', 400
-        )
+        raise CiftagWorkException(f'-- Max retry over task_id: {task_id}', 400)
 
     except Exception as exc:
         update_task_status(task_id, {
@@ -97,12 +99,10 @@ def run_pinterest(
             'msg': f'UnExpect Exception in Pinterest Local task_id: {task_id}',
             'traceback': get_traceback_str(exc.__traceback__),
         })
-        raise CiftagWorkException(
-            f'-- UnExpect Exception in Pinterest Local task_id: {task_id}', 400
-        )
+        raise CiftagWorkException(f'-- UnExpect Exception in Pinterest Local task_id: {task_id}', 400)
 
 
-@app.task(bind=True, name="ciftag.task.pinterest_after")
+@app.task(bind=True, name="ciftag.task.pinterest_after", max_retries=0)
 def after_pinterest(self, results: List[Dict[str, Any]], work_id: int, pint_id: int):
     from ciftag.models import PinterestCrawlInfo, enums
     from ciftag.web.crud.core import update_orm
