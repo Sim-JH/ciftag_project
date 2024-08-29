@@ -8,8 +8,8 @@ from subprocess import check_output
 
 from celery.exceptions import MaxRetriesExceededError
 
-from ciftag.settings import TIMEZONE
 import ciftag.utils.logger as logger
+from ciftag.settings import TIMEZONE, env_key
 from ciftag.utils.converter import get_traceback_str
 from ciftag.exceptions import CiftagWorkException
 from ciftag.celery_app import app
@@ -47,10 +47,9 @@ def run_pinterest(
 
     # TODO cred_info 분할 할당 및 재시도 관련 로직 & 에러에 따라 계정 상태 업데이트
     cred_info = cred_info_list[0]
-    max_retry = 1  # TODO: param으로 관리
 
     try:
-        for attempt in range(max_retry):
+        for attempt in range(env_key.MAX_RETRY):
             result = run(task_id, work_id, pint_id, cred_info, runner_identify, goal_cnt, data)
 
             # 작업 성공
@@ -117,3 +116,5 @@ def after_pinterest(self, results: List[Dict[str, Any]], work_id: int, pint_id: 
 
     # 외부 작업 로그 update
     update_work_status(work_id, {'work_sta': enums.WorkStatusCode.success})
+
+    # TODO redis set 남은 것 확인 & airflow 트리거

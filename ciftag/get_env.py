@@ -29,6 +29,16 @@ class EnvKeys:
         self.DB_PASSWORD: str = os.getenv("DB_PASSWORD", None)
         # endregion
 
+        # git action 관련
+        self.GIT_TOKEN: str = os.getenv("GIT_TOKEN", None)
+        self.GIT_OWNER: str = os.getenv("GIT_OWNER", None)
+        self.GIT_NAME: str = os.getenv("GIT_NAME", None)
+
         # slack 관련
         self.SLACK_URI: str = os.getenv("SLACK_URI", None)
         self.SLACK_URI_NOTICE: str = os.getenv("SLACK_URI_NOTICE", None)
+
+        # 작업 관련
+        self.MAX_RETRY: int = os.getenv("MAX_RETRY", 3)
+        self.CELERY_WORKER: int = os.getenv("CELERY_WORKER", 10)
+        self.ECS_WORKER: int = os.getenv("ECS_WORKER", 10)

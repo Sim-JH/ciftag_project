@@ -6,7 +6,6 @@ class CiftagCrypto:
         self.cipher_suite = None
 
     def key_gen(self):
-        # TODO 큐 올릴때 생성해서, compose하거나 terraform apply시 환경변수로 등록해서 가져오게끔
         key = Fernet.generate_key()
         return key
 

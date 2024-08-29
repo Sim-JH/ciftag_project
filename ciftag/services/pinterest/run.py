@@ -8,7 +8,7 @@ from playwright.sync_api import sync_playwright
 
 import ciftag.utils.logger as logger
 import ciftag.utils.crypto as crypto
-from ciftag.settings import TIMEZONE
+from ciftag.settings import TIMEZONE, SERVER_TYPE
 from ciftag.models import enums
 from ciftag.scripts.common import update_task_status
 from ciftag.scripts.pinterest import insert_pint_result
@@ -59,7 +59,7 @@ def run(
     max_width = int(data.get('max_width')) if int(data.get('max_width')) else None
 
     # redis set name
-    redis_name = f"{PAGETYPE}_{work_id}"
+    redis_name = f"{SERVER_TYPE}_{PAGETYPE}_{work_id}"
 
     # pw 암호 키 존재 시
     if crypto_key := os.getenv('crypto_key'):

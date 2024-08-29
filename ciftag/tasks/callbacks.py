@@ -22,4 +22,5 @@ def task_fail_callback(request, ext, traceback):
                   f"--- Task Error: {ext}\n"
                   f"-- Celery Meta: {request.id}/{request.task} Retry: {request.retries} \n"
                   f"-- Traceback \n"
-                  f"{get_traceback_str(traceback)}")
+                  f"{get_traceback_str(traceback)}",
+                  'error')

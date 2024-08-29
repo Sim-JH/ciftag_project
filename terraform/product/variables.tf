@@ -22,6 +22,13 @@ variable "run_type" {
   default     = "pinterest"
 }
 
+variable "crypto_key" {
+  description = "Crypto Key"
+  type        = string
+  nullable    = true
+  default     = null
+}
+
 variable "init_count_fargate_ciftag" {
   description = "Number of instances of the task definition to place and keep running. Defaults to `0`"
   type        = number

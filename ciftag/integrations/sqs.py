@@ -103,3 +103,9 @@ class SqsManger:
 
         return True
 
+    @__retry
+    def purge_queue(self):
+        """Purge all messages from the SQS queue."""
+        self.client.purge_queue(QueueUrl=self.queue_url)
+
+        return True
