@@ -6,6 +6,7 @@ import uvicorn
 import sqlalchemy
 
 import ciftag.utils.logger as logger
+import ciftag.fargate.run as fargate_crawl
 from ciftag.utils import bootstrap
 from ciftag.web.app import create_app
 from ciftag.configuration import conf
@@ -43,6 +44,10 @@ def start_api_server(args):
         uvicorn.run(app, host=host, port=int(port))
 
 
+def run_crawler(args):
+    fargate_crawl.runner(args.run_type)
+
+
 class CiftagParser:
     """cli args 파싱 및 해당 작업 호출"""
     def __init__(self):
@@ -52,6 +57,7 @@ class CiftagParser:
         subcommands :
             db          handling database
             api         execute api server
+            crawl       execute crawler
         """,
         )
         self.parser.add_argument("command", help="Subcommand to run")
@@ -89,6 +95,20 @@ class CiftagParser:
             help="Develop Server",
         )
         parser.set_defaults(func=start_api_server)
+
+        return parser
+
+    def crawl(self):
+        """수집기 실행 명령어 처리 (현재는 sqs 큐 소비 쪽만 구현)"""
+        parser = argparse.ArgumentParser(
+            prog="ciftag crawl", description="execute crawler (base on sqs only)"
+        )
+        parser.add_argument(
+            "run_type",
+            type=str,
+            help="Specify the type of the crawler to run"
+        )
+        parser.set_defaults(func=run_crawler)
 
         return parser
 
