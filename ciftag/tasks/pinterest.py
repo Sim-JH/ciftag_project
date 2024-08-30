@@ -22,7 +22,7 @@ logs = logger.Logger(log_dir='Pinterest')
 
 @app.task(bind=True, name="ciftag.task.pinterest_run", max_retries=0)
 def run_pinterest(
-        self, work_id: int, pint_id: int, cred_info_list: List[Dict[str, Any]], goal_cnt: int, data: Dict[str, Any]
+        self, work_id: int, pint_id: int, cred_info: Dict[str, Any], goal_cnt: int, data: Dict[str, Any]
 ) -> Dict[str, Any]:
     """핀터레스트 크롤러 실행"""
     # 내부 작업 식별자 생성(worker) 및 내부 작업 로그 등록
@@ -44,9 +44,6 @@ def run_pinterest(
 
     # task_id를 다른 콜백에서 접근 가능하게 추가
     self.request.task_id = task_id
-
-    # TODO cred_info 분할 할당 및 재시도 관련 로직 & 에러에 따라 계정 상태 업데이트
-    cred_info = cred_info_list[0]
 
     try:
         for attempt in range(env_key.MAX_RETRY):

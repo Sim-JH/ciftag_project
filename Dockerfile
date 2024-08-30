@@ -21,6 +21,7 @@ RUN apt-get update && \
     iputils-ping \
     httping \
     locales \
+    iptables \
     libxcb1 \
     libfftw3-3 \
     libxmu6 \

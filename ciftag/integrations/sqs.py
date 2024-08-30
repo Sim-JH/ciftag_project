@@ -12,7 +12,7 @@ import ciftag.utils.logger as logger
 
 from botocore.exceptions import BotoCoreError, ClientError
 
-logs = logger.Logger()
+logs = logger.Logger('AWS')
 
 
 @dataclass(frozen=True)
@@ -30,7 +30,7 @@ class SqsManger:
     """ AWS SQS interface """
     def __init__(self, server_type, batch_size=1):
         if server_type == "dev":
-            self.queue_url = env_key.SQS_URI
+            self.queue_url = env_key.SQS_DEV_URI
 
         self.batch_size = batch_size
         self.message_handle = ""
@@ -46,13 +46,13 @@ class SqsManger:
         """ sqs 에러 시 네트워크 재설정 후 재시도 """
         def wrapper(self, *args, **kwargs):
             for attempt in range(1, 6):
-                time.sleep(10)
                 try:
                     return func(self, *args, **kwargs)
                 except (BotoCoreError, ClientError) as e:
                     logs.log_data(f'---- {func.__name__} SQS Error {attempt} : {e}')
                     check_output(['iptables', '-F'])
                     check_output(['ip', 'rule', 'add', 'from', 'all', 'lookup', 'main'])
+                    time.sleep(5)
             else:
                 logs.log_data(f'---- {func.__name__} SQS Error Fail Retry over')
                 return False
@@ -98,7 +98,7 @@ class SqsManger:
         """Send a message to the SQS queue."""
         self.client.send_message(
             QueueUrl=self.queue_url,
-            MessageBody=json.dumps(data),
+            MessageBody=json.dumps(data, ensure_ascii=False),
         )
 
         return True
