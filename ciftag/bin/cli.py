@@ -45,7 +45,14 @@ def start_api_server(args):
 
 
 def run_crawler(args):
-    fargate_crawl.runner(args.run_type)
+    if args.run_type == "test":
+        container_start_time = time.time()
+        while True:
+            if int(time.time()) > int(container_start_time) + 3600:
+                exit()
+            time.sleep(600)
+    else:
+        fargate_crawl.runner(args.run_type)
 
 
 class CiftagParser:
@@ -113,6 +120,7 @@ class CiftagParser:
         parser.add_argument(
             "run_type",
             type=str,
+            choices=['pinterest', 'test'],
             help="Specify the type of the crawler to run"
         )
         parser.set_defaults(func=run_crawler)

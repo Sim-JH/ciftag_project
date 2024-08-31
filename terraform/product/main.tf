@@ -104,11 +104,11 @@ module "ecs_service_ciftag_product" {
       secrets = [
         {
           "name" : "AWS_ACCESS_KEY_ID",
-          "valueFrom" : "arn:aws:ssm:ap-northeast-2:617204753570:parameter/secret"
+          "valueFrom" : "arn:aws:ssm:ap-northeast-2:617204753570:parameter/access_key"
         },
         {
           "name" : "AWS_SECRET_ACCESS_KEY",
-          "valueFrom" : "arn:aws:ssm:ap-northeast-2:617204753570:parameter/secret"
+          "valueFrom" : "arn:aws:ssm:ap-northeast-2:617204753570:parameter/secret_key"
         }
       ]
 
@@ -163,11 +163,11 @@ data "aws_ecs_task_execution" "ciftag_fargate_product" {
     weight            = 100
   }
 
-  # fargate subnet 설정 필수 (기본 VPC 사용, 프라이빗 서브넷)
+  # fargate subnet 설정 필수 (기본 VPC 사용, 프라이빗 서브넷[nat gateway 비용 문제로 퍼블릭 ip 할당(assign_public_ip)허용])
   network_configuration {
     subnets          = ["subnet-01d7b0f696f7e7aa1", "subnet-04978f4993d36dee4", "subnet-0adc0bdd2925bfc5e", "subnet-01c50402b7def20fc"]
     security_groups  = ["sg-081c13aa5c2fc8970"]
-    assign_public_ip = false
+    assign_public_ip = true
   }
 
   tags = local.tags

@@ -50,6 +50,11 @@ def configure_vars():
 
 def configure_env_from_ps(name='ciftag', just_param=Optional[Dict[str, str]]):
     """parameter store에서 키를 찾아 반환해주거나 환경변수로 등록"""
+    import ciftag.utils.logger as logger
+    logs = logger.Logger()
+    logs.log_data(f'AWS_ACCESS_KEY_ID: {os.getenv('AWS_ACCESS_KEY_ID')}')
+    logs.log_data(f'AWS_SECRET_ACCESS_KEY: {os.getenv('AWS_SECRET_ACCESS_KEY')}')
+
     client = boto3.client(
         "ssm",
         aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
