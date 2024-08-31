@@ -1,7 +1,7 @@
 import os
 import atexit
 import logging
-from typing import Optional
+from typing import Optional, Dict
 
 import boto3
 import pendulum
@@ -48,7 +48,8 @@ def configure_vars():
         TIMEZONE = pendulum.timezone(tz)
 
 
-def configure_env_from_ps(name='ciftag'):
+def configure_env_from_ps(name='ciftag', just_param=Optional[Dict[str, str]]):
+    """parameter store에서 키를 찾아 반환해주거나 환경변수로 등록"""
     client = boto3.client(
         "ssm",
         aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
@@ -58,13 +59,21 @@ def configure_env_from_ps(name='ciftag'):
 
     parameter = client.get_parameter(Name=f'/{name}', WithDecryption=True)["Parameter"]["Value"]
 
-    for param in parameter.splitlines():
-        p = param.split("=", 1)
-        if len(p) == 2:
-            if p[1][0] == '[' and p[1][-1] == ']':
-                os.environ[p[0]] = p[1]
-            else:
-                os.environ[p[0]] = p[1].replace('"', '')
+    if isinstance(just_param, dict):
+        # just_param 딕셔너리의 키와 일치하는 파라미터 값을 찾아서 채우기
+        param_dict = dict(line.split("=", 1) for line in parameter.splitlines() if "=" in line)
+        for key in just_param:
+            if key in param_dict:
+                just_param[key] = param_dict[key].replace('"', '').strip()
+        return just_param
+    else:
+        for param in parameter.splitlines():
+            p = param.split("=", 1)
+            if len(p) == 2:
+                if p[1][0] == '[' and p[1][-1] == ']':
+                    os.environ[p[0]] = p[1]
+                else:
+                    os.environ[p[0]] = p[1].replace('"', '')
 
 
 def configure_orm(dbase):

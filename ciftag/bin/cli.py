@@ -17,7 +17,7 @@ logs = logger.Logger(log_dir='CLI')
 
 def initdb(args):
     """데이터베이스 초기화"""
-    bootstrap.initdb()
+    bootstrap.initdb(args.aws)
 
 
 def start_api_server(args):
@@ -71,6 +71,13 @@ class CiftagParser:
 
         ht = "Initialize the database"
         parser_initdb = subparsers.add_parser("init", help=ht)
+        # aws rds 초기 db 생성옵션
+        parser_initdb.add_argument(
+            "-a",
+            "--aws",
+            action="store_true",
+            help="Set init aws db",
+        )
         parser_initdb.set_defaults(func=initdb)
 
         return parser

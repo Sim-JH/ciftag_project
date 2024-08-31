@@ -100,6 +100,7 @@ module "ecs_service_ciftag_product" {
         }
       ]
 
+      # parameter store에서 secret 값 가져와 환경변수로 등록
       secrets = [
         {
           "name" : "AWS_ACCESS_KEY_ID",
