@@ -27,10 +27,7 @@ class PinterestCrawlData(Base, ImgDataImgDataMixin):
     __tablename__ = "pint_crawl_data"
 
     id = Column(Integer, primary_key=True)  # 인덱스
-    pint_pk = Column(
-        Integer,
-        ForeignKey("pint_crawl_info.id", onupdate="CASCADE"),
-    )  # 핀터레스트 정보 ID (FK)
+    pint_pk = Column(Integer)  # 핀터레스트 정보 ID (FK)
     thumbnail_url = Column(String)
     image_url = Column(String)
     title = Column(String)

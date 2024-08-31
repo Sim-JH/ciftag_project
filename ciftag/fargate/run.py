@@ -22,9 +22,8 @@ logs = logger.Logger('AWS')
 
 def exit_handler():
     # if 현재 컨테이너가 실행 중인 ecs 중 마자믹 일 시
-
+    # TODO 아래 작업은 airflow로 실행하도록 트리거
     # 외부 작업 로그 update
-
     # pint info update
     pass
 
