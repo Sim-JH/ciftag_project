@@ -52,8 +52,6 @@ RUN playwright install-deps
 # Install ciftag package
 COPY . /src/module
 WORKDIR /src/module
-# .dockerignore가 빌드 컨택스트 위치만 인식하므로 직접 삭제
-RUN rm -rf ciftag/apis ciftag/tasks ciftag/celery_app.py
 RUN pip install -e .
 
 # Dsize image
