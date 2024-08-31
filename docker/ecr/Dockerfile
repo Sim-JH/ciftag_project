@@ -17,9 +17,11 @@ RUN apt-get update && \
     unzip \
     zip \
     vim \
+    curl \
     iputils-ping \
     httping \
     locales \
+    iptables \
     libxcb1 \
     libfftw3-3 \
     libxmu6 \

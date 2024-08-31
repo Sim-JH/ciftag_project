@@ -50,8 +50,6 @@ class SqsManger:
                     return func(self, *args, **kwargs)
                 except (BotoCoreError, ClientError) as e:
                     logs.log_data(f'---- {func.__name__} SQS Error {attempt} : {e}')
-                    check_output(['iptables', '-F'])
-                    check_output(['ip', 'rule', 'add', 'from', 'all', 'lookup', 'main'])
                     time.sleep(5)
             else:
                 logs.log_data(f'---- {func.__name__} SQS Error Fail Retry over')
