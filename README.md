@@ -13,3 +13,7 @@ AWS Crawl Workflow
 4. 크롤링 작업 실행 / 내부 작업 (task_info log update) [services]
    모든 ecs container 작업 종료 대기 후 후처리 트리거 (task_info log 기반으로 컨테이너 작업 상황 파악)
 5. 후처리 및 airflow 호출 / 외부 작업 (work_info log update) [fargate]
+
+
+![Workflow.png](ciftag%2Fconfig_templates%2FWorkflow.png)
+
