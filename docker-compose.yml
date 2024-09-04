@@ -30,7 +30,6 @@ services:
                 condition: service_healthy
             db:
                 condition: service_healthy
-
 #    module:
 #        privileged: true
 #        restart: always
@@ -51,18 +50,62 @@ services:
 #            - 5000:5000
 #        networks:
 #            - ciftag_network
-
-#    fargate:
-#        image: ecr
-#        privileged: true
-#        command: sh init.sh
-#        environment:
-#            - RUN_ON=aws
-#            - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-#            - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-#            - AWS_DEFAULT_REGION=ap-northeast-2
-#        deploy:
-#            replicas: 1
+    airflow-webserver:
+        image: ciftag-airflow
+        build:
+            context: airflow
+            dockerfile: Dockerfile
+        container_name: ciftag-airflow-webserver
+        env_file:
+            - $PWD/airflow/.env
+        volumes:
+            - $PWD/airflow/dags:/opt/airflow/dags
+            - $PWD/airflow/logs:/opt/airflow/logs
+            - $PWD/airflow/plugins:/opt/airflow/plugins
+        ports:
+            - "8080:8080"
+        networks:
+            - ciftag_network
+        command: airflow webserver
+        depends_on:
+            mq:
+                condition: service_healthy
+            db:
+                condition: service_healthy
+        healthcheck:
+            test: [ "CMD-SHELL", "curl --fail http://localhost:8080/health || exit 1" ]
+            interval: 30s
+            timeout: 10s
+            retries: 5
+            start_period: 40s
+    airflow-scheduler:
+        image: ciftag-airflow
+        build:
+            context: airflow
+            dockerfile: Dockerfile
+        container_name: ciftag-airflow-scheduler
+        env_file:
+            - airflow/.env
+        volumes:
+            - $PWD/airflow/dags:/opt/airflow/dags
+            - $PWD/airflow/logs:/opt/airflow/logs
+            - $PWD/airflow/plugins:/opt/airflow/plugins
+        networks:
+            - ciftag_network
+        command: airflow scheduler
+        depends_on:
+            mq:
+                condition: service_healthy
+            db:
+                condition: service_healthy
+            airflow-webserver:
+                condition: service_healthy
+        healthcheck:
+            test: [ "CMD-SHELL", "airflow jobs check --job-type SchedulerJob --hostname $(hostname) || exit 1" ]
+            interval: 30s
+            timeout: 10s
+            retries: 5
+            start_period: 40s
     db:
         restart: always
         image: ciftag-postgres
