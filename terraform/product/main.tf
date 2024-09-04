@@ -50,16 +50,16 @@ module "ecs_service_ciftag_product" {
   name        = "ciftag-consumer-${local.type}"
   cluster_arn = var.ciftag_cluster_arn
 
-  cpu                      = 256
-  memory                   = 512
-  assign_public_ip         = false
-  scheduling_strategy      = "DAEMON"
+  cpu                 = 256
+  memory              = 512
+  assign_public_ip    = false
+  scheduling_strategy = "DAEMON"
   # 초기 task 시작 갯수
   desired_count            = 0
   autoscaling_min_capacity = 0
   force_new_deployment     = true
   # exec 활성화
-  enable_execute_command   = true
+  enable_execute_command = true
   # 보안 그룹 자동 생성을 비활성화
   create_security_group = false
 
