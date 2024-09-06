@@ -1,3 +1,4 @@
+import subprocess
 import sys
 import time
 import argparse
@@ -18,6 +19,10 @@ logs = logger.Logger(log_dir='CLI')
 def initdb(args):
     """데이터베이스 초기화"""
     bootstrap.initdb(args.aws)
+
+
+def restart_worker(args):
+    subprocess.run(f'supervisorctl restart {args.worker}', shell=True, check=True)
 
 
 def start_api_server(args):
@@ -62,12 +67,31 @@ class CiftagParser:
             usage="""ciftag <command> [<args>]
 
         subcommands :
+            celery      handling celery
             db          handling database
             api         execute api server
             crawl       execute crawler
         """,
         )
         self.parser.add_argument("command", help="Subcommand to run")
+    def celery(self):
+        """데이터베이스 관련 명령어 처리"""
+        parser = argparse.ArgumentParser(
+            prog="ciftag celery", description="handling celery"
+        )
+        subparsers = parser.add_subparsers()
+
+        ht = "restart celery worker"
+        parser = subparsers.add_parser("restart", help=ht)
+        parser.add_argument(
+            "worker",
+            type=str,
+            choices=['all', 'celery', 'task'],
+            help="Specify the type of the crawler to run"
+        )
+        parser.set_defaults(func=restart_worker)
+
+        return parser
 
     def db(self):
         """데이터베이스 관련 명령어 처리"""

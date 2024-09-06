@@ -34,6 +34,12 @@ class EnvKeys:
         self.GIT_OWNER: str = os.getenv("GIT_OWNER", None)
         self.GIT_NAME: str = os.getenv("GIT_NAME", None)
 
+        # airflow 관련
+        self.AIRFLOW_URI: str = os.getenv("AIRFLOW_URI", None)
+        self.AIRFLOW_PORT: int = int(os.getenv("AIRFLOW_PORT", 8080))
+        self.AIRFLOW_USERNAME: str = os.getenv("AIRFLOW_USERNAME", None)
+        self.AIRFLOW_PASSWORD: str = os.getenv("AIRFLOW_PASSWORD", None)
+
         # slack 관련
         self.SLACK_URI: str = os.getenv("SLACK_URI", None)
         self.SLACK_URI_NOTICE: str = os.getenv("SLACK_URI_NOTICE", None)

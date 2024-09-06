@@ -1,10 +1,9 @@
-import os
 import time
 import random
 import json
+import requests
 from datetime import datetime
 from typing import Any, Dict, List
-from subprocess import check_output
 
 from celery.exceptions import MaxRetriesExceededError
 
@@ -55,6 +54,7 @@ def run_pinterest(
                     'task_sta': enums.TaskStatusCode.success.name,
                     'end_dt': result['end_dt']
                 })
+                del result['end_dt']
                 return result
 
             # 재시도 대상
@@ -100,18 +100,30 @@ def run_pinterest(
 
 @app.task(bind=True, name="ciftag.task.pinterest_after", max_retries=0)
 def after_pinterest(self, results: List[Dict[str, Any]], work_id: int, pint_id: int):
-    from ciftag.models import PinterestCrawlInfo, enums
-    from ciftag.web.crud.core import update_orm
+    from ciftag.models import enums
     from ciftag.web.crud.common import update_work_status
     # 외부 작업 로그 update
     update_work_status(work_id, {'work_sta': enums.WorkStatusCode.postproc})
 
-    # pint info update
-    for result in results:
-        del result['end_dt']
-        update_orm(PinterestCrawlInfo, 'id', pint_id, result)
+    airflow_param = {
+        'work_id': work_id,
+        'pint_id': pint_id,
+        'results': results
+    }
 
-    # 외부 작업 로그 update
-    update_work_status(work_id, {'work_sta': enums.WorkStatusCode.success})
-
-    # TODO redis set 남은 것 확인 & airflow 트리거
+    try:
+        url = f"http://{env_key.AIRFLOW_URI}:{env_key.AIRFLOW_PORT}/api/v1/dags/run-after-pinterest/dagRuns"
+        headers = {
+            "content-type": "application/json",
+            "Accept": "application/json",
+        }
+        response = requests.post(
+            url,
+            json={"conf": airflow_param},
+            headers=headers,
+            auth=(env_key.AIRFLOW_USERNAME, env_key.AIRFLOW_PASSWORD),
+            verify=False  # crt 인증서 airflow 적용 시 수정 & https
+        )
+        logs.log_data(f"--- Exit dag Success: {response.status_code}")
+    except Exception as e:
+        logs.log_data(f"--- Exit dag Fail: {e}")
