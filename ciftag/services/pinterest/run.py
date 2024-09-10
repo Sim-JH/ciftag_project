@@ -104,7 +104,7 @@ def run(
     # 결과 적재
     pins = result['pins']
     logs.log_data(f'--- Task-{task_id} {PAGETYPE} 결과 적재')
-    update_task_status(task_id, {'task_sta': enums.TaskStatusCode.result.name})
+    update_task_status(task_id, {'task_sta': enums.TaskStatusCode.result.name, 'get_cnt': len(pins)})
 
     for pin in pins:
         pin.update({

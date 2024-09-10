@@ -60,6 +60,7 @@ services:
             - $PWD/airflow/.env
         volumes:
             - $PWD/airflow/dags:/opt/airflow/dags
+            - $PWD/airflow/scripts:/opt/airflow/scripts
             - $PWD/airflow/logs:/opt/airflow/logs
             - $PWD/airflow/plugins:/opt/airflow/plugins
         ports:
@@ -88,6 +89,7 @@ services:
             - airflow/.env
         volumes:
             - $PWD/airflow/dags:/opt/airflow/dags
+            - $PWD/airflow/scripts:/opt/airflow/scripts
             - $PWD/airflow/logs:/opt/airflow/logs
             - $PWD/airflow/plugins:/opt/airflow/plugins
         networks:

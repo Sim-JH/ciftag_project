@@ -24,7 +24,7 @@ def exit_handler():
     # if 현재 컨테이너가 실행 중인 ecs 중 마자믹 일 시
     # TODO 아래 작업은 airflow로 실행하도록 트리거
     # 외부 작업 로그 update
-    # pint info update
+    # pint info update (수행한 task들 조회하여 hits와 소모시간 집계 후 request)
     pass
 
 
@@ -61,7 +61,7 @@ def runner(run_type: str):
 
         # get sqs 실패 시 n회까지 재시도
         if not content:
-            if re_call <= env_key.MAX_RETRY:
+            if re_call < env_key.MAX_RETRY:
                 re_call += 1
                 logs.log_data(f"SQS Recall: {str(re_call)}")
                 time.sleep(10)

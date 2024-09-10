@@ -19,8 +19,16 @@ echo "Admin user created."
 airflow connections add 'aws_rds_connection' \
     --conn-uri 'postgresql://admin:ciftag@ciftag-db.cr0068guyz3r.ap-northeast-2.rds.amazonaws.com:5432/ciftag'
 
-airflow connections add 'main_postgresql_connection' \
-    --conn-uri 'postgresql://admin:ciftag@ciftag-postgres:5432/ciftag'
+airflow connections add 'main_postgresql_dev_connection' \
+    --conn-uri 'postgresql://admin:ciftag@ciftag-postgres:5432/dev'
+
+# Set Airflow Variable for base_script_path
+airflow variables set base_script_path "/opt/airflow/scripts"
+
+# Start Celery worker
+echo "Starting Airflow Celery worker..."
+airflow celery worker &
+echo "Airflow Celery worker started."
 
 # Continue with the default entrypoint
 exec "$@"

@@ -105,10 +105,21 @@ def after_pinterest(self, results: List[Dict[str, Any]], work_id: int, pint_id: 
     # 외부 작업 로그 update
     update_work_status(work_id, {'work_sta': enums.WorkStatusCode.postproc})
 
+    # 결과 집계
+    hits = 0
+    elapsed_time = 0
+
+    for result in results:
+        hits += int(result['hits'])
+
+        if (e_time := float(result['elapsed_time'])) > elapsed_time:
+            elapsed_time = e_time
+
     airflow_param = {
         'work_id': work_id,
         'pint_id': pint_id,
-        'results': results
+        'hits': hits,
+        'elapsed_time': elapsed_time,
     }
 
     try:
