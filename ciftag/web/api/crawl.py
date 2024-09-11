@@ -1,7 +1,6 @@
 from typing import List, Union
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Query, Body
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Path, Query
 
 
 from ciftag.web.schemas.crawl import (
