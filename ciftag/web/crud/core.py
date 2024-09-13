@@ -105,6 +105,24 @@ def update_orm(model: Base, key: str, value: Any, body) -> Base:
     return record
 
 
+def increment_orm(model: Base, key: str, value: Any, increment_column: str) -> Base:
+    """특정 컬럼(int 타입)의 값을 1 증가"""
+    table_key = getattr(model, key)
+
+    if not table_key:
+        raise CiftagAPIException(f"Resource {key} not found", 404)
+
+    increment_col = getattr(model, increment_column)
+
+    if not increment_col:
+        raise CiftagAPIException(f"Column {increment_column} not found", 404)
+
+    with dbm.create_session() as session:
+        record = session.query(model).filter(table_key == value).update({increment_col: increment_col + 1})
+
+    return record
+
+
 def delete_orm(model: Base, key: str, value: Any) -> Base:
     """모델 key 기반 record delete"""
     table_key = getattr(model, key)
