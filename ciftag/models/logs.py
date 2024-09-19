@@ -52,7 +52,7 @@ class TaskInfo(Base):
 
     id = Column(Integer, primary_key=True)
     work_pk = Column(Integer)  # 작업 정보 ID (FK)
-    runner_identify = Column(String)  # 현재 처리기 [worke or continaer] (work_id + host_name + real ip + time)
+    runner_identify = Column(String)  # 현재 처리기 [worker or continaer] (work_id + host_name + real ip + time)
     body = Column(Text)  # queue body 정보
     task_sta = Column(Enum(enums.TaskStatusCode))  # 내부 작업 상태
     get_cnt = Column(Integer)  # 크롤링 한 이미지 정보 갯수  

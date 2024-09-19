@@ -11,6 +11,10 @@ on:
         description: 'run_type'
         required: true
         type: string
+      work_id:
+        description: 'work_id'
+        required: true
+        type: string
       crypto_key:
         description: 'crypto_key'
         required: false
@@ -71,6 +75,7 @@ jobs:
       env:
         SERVER_TYPE: ${{ github.event.inputs.server_type }}
         RUN_TYPE: ${{ github.event.inputs.run_type }}
+        WORK_ID: ${{ github.event.inputs.work_id }}
         CRYPTO_KEY: ${{ github.event.inputs.crypto_key }}
       run: bash terraform_for_ciftag.sh
       working-directory: ${{ env.working-directory }}

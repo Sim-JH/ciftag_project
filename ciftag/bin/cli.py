@@ -57,7 +57,7 @@ def run_crawler(args):
                 exit()
             time.sleep(600)
     else:
-        fargate_crawl.runner(args.run_type)
+        fargate_crawl.runner(args.run_type, int(args.work_id))
 
 
 class CiftagParser:
@@ -146,6 +146,11 @@ class CiftagParser:
             type=str,
             choices=['pinterest', 'test'],
             help="Specify the type of the crawler to run"
+        )
+        parser.add_argument(
+            "work_id",
+            type=str,
+            help="Specify the work ident"
         )
         parser.set_defaults(func=run_crawler)
 

@@ -22,6 +22,12 @@ variable "run_type" {
   default     = "pinterest"
 }
 
+variable "work_id" {
+  description = "Crawl Work Ident"
+  type        = string
+  default     = "0"
+}
+
 variable "crypto_key" {
   description = "Crypto Key"
   type        = string

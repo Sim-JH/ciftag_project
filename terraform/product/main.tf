@@ -99,6 +99,10 @@ module "ecs_service_ciftag_product" {
           "value" : var.run_type
         },
         {
+          "name" : "WORK_ID",
+          "value" : var.work_id
+        },
+        {
           "name" : "CRYPTO_KEY",
           "value" : var.crypto_key
         }

@@ -3,13 +3,14 @@
 i=0
 echo "${SERVER_TYPE}"
 echo "${RUN_TYPE}"
+echo "${WORK_ID}"
 
 if [ ${SERVER_TYPE} = "dev" ]
     then
         for ((i=0; i<=${ECS_COUNT_CIFTAG}; i++))
         do
             echo "ciftag ${SERVER_TYPE} ${i} 실행"
-            terraform apply -auto-approve -input=false -var="desired_count_tasks_fargate_ciftag=1" -var="init_count_fargate_ciftag=1" -var="server_type=${SERVER_TYPE}" -var="run_type=${RUN_TYPE}" -var="crypto_key=${CRYPTO_KEY}"
+            terraform apply -auto-approve -input=false -var="desired_count_tasks_fargate_ciftag=1" -var="init_count_fargate_ciftag=1" -var="work_id=${WORK_ID}" -var="server_type=${SERVER_TYPE}" -var="run_type=${RUN_TYPE}" -var="crypto_key=${CRYPTO_KEY}"
             sleep 3
         done
 fi
@@ -19,7 +20,7 @@ if [ ${SERVER_TYPE} = "product" ]
         for ((i=0; i<=${ECS_COUNT_CIFTAG}; i++))
         do
             echo "ciftag ${SERVER_TYPE} ${i} 실행"
-            terraform apply -auto-approve -input=false -var="desired_count_tasks_fargate_ciftag=${ECS_COUNT_CIFTAG}" -var="init_count_fargate_ciftag=3" -var="server_type=${SERVER_TYPE}" -var="run_type=${RUN_TYPE}" -var="crypto_key=${CRYPTO_KEY}"
+            terraform apply -auto-approve -input=false -var="desired_count_tasks_fargate_ciftag=${ECS_COUNT_CIFTAG}" -var="init_count_fargate_ciftag=3" -var="work_id=${WORK_ID}" -var="server_type=${SERVER_TYPE}" -var="run_type=${RUN_TYPE}" -var="crypto_key=${CRYPTO_KEY}"
             sleep 3
         done
 fi
