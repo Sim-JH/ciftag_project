@@ -3,9 +3,45 @@ from datetime import datetime
 
 from ciftag.settings import TIMEZONE
 import ciftag.utils.logger as logger
-from ciftag.scripts.core import save_sql
+from ciftag.scripts.core import select_sql, save_sql
 
 logs = logger.Logger(log_dir='sql')
+
+
+def check_task_status(work_id):
+    """내부 작업 현황 조회"""
+    task_sql = f"""SELECT task_sta FROM task_info 
+                    WHERE work_id = {work_id} AND task_sta = load"""
+
+    result = select_sql(task_sql)
+
+    return result
+
+
+def aggregate_task_result(work_id):
+    """내부 작업 결과 합산 [target 별, cnt 합산, elapsed_time 최대 소모 시간]"""
+    task_sql = f"""WITH ranked_rows AS (
+                        SELECT (body::jsonb -> 'target_code' ->> 'name') AS target, 
+                                get_cnt, 
+                                start_dt, 
+                                end_dt, 
+                                end_dt - start_dt AS elapsed_time,
+                                SUM(get_cnt) OVER (PARTITION BY (body::jsonb -> 'target_code' ->> 'name')) AS total_cnt,
+                                ROW_NUMBER() OVER (
+                                    PARTITION BY (body::jsonb -> 'target_code' ->> 'name') 
+                                    ORDER BY (end_dt - start_dt) DESC
+                                ) AS rn
+                        FROM task_info 
+                        WHERE work_pk = {work_id} 
+                          AND (task_sta = 'success' OR task_sta = 'failed')
+                    )
+                    SELECT target, total_cnt, elapsed_time
+                    FROM ranked_rows
+                    WHERE rn = 1;"""
+
+    result = select_sql(task_sql)
+
+    return result
 
 
 def insert_task_status(args: Dict[str, Any]):

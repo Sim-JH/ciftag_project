@@ -6,6 +6,7 @@ import time
 import random
 import json
 import atexit
+import requests
 from datetime import datetime
 from subprocess import check_output
 
@@ -15,20 +16,49 @@ from ciftag.settings import SERVER_TYPE, TIMEZONE, env_key
 from ciftag.models import enums
 from ciftag.utils.converter import get_traceback_str
 from ciftag.integrations.sqs import SqsManger
-from ciftag.scripts.common import insert_task_status, update_task_status
+from ciftag.scripts.common import check_task_status, aggregate_task_result, insert_task_status, update_task_status
 
 logs = logger.Logger('AWS')
 
 
 def exit_handler():
-    # if 현재 컨테이너가 실행 중인 ecs 중 마자믹 일 시
-    # TODO 아래 작업은 airflow로 실행하도록 트리거
-    # 외부 작업 로그 update
-    # pint info update (수행한 task들 조회하여 hits와 소모시간 집계 후 request)
-    pass
+    global _work_id
+    result = check_task_status(work_id=_work_id)
+
+    # work_id == ecs task 그룹 / 각 task는 대상 사이트를 1개씩만 할당
+    # if 현재 컨테이너가 실행 중인 ecs 중 마자막일 경우
+    if result is None or len(result) == 0:
+        task_result = aggregate_task_result(work_id=_work_id)
+
+        # TODO airflow 상위 task dag 구현 이후 동적 호출 방법 수정
+        for target, get_cnt, elapsed_time in task_result:
+            if target == "pinterest":
+                airflow_param = {
+                    'work_id': _work_id,
+                    'hits': get_cnt,
+                    'elapsed_time': elapsed_time,
+                }
+
+                try:
+                    url = f"http://{env_key.AIRFLOW_URI}:{env_key.AIRFLOW_PORT}/api/v1/dags/run-after-pinterest/dagRuns"
+                    headers = {
+                        "content-type": "application/json",
+                        "Accept": "application/json",
+                    }
+                    response = requests.post(
+                        url,
+                        json={"conf": airflow_param},
+                        headers=headers,
+                        auth=(env_key.AIRFLOW_USERNAME, env_key.AIRFLOW_PASSWORD),
+                        verify=False  # crt 인증서 airflow 적용 시 수정 & https
+                    )
+                    logs.log_data(f"--- Exit dag Success: {response.status_code}")
+                except Exception as e:
+                    logs.log_data(f"--- Exit dag Fail: {e}")
 
 
 atexit.register(exit_handler)  # 프로세스 종료시 호출
+_work_id = 0
 
 try:
     real_ip = (
@@ -43,11 +73,12 @@ host_name = check_output(["hostname"]).strip().decode("utf-8").replace("-", ".")
 runner_identify = f"{real_ip}_{host_name}_{str(round(time.time() * 1000))}"
 
 
-def runner(run_type: str):
+def runner(run_type: str, container_work_id: int):
     # container별 log_name 지정 필요하려나?
     # container_ip = check_output(["curl", "https://lumtest.com/myip"])
-    # TODO run_type check
+    global _work_id
     container_start_time = time.time()
+    _work_id = container_work_id
 
     re_call = 0  # get sqs 시도 횟수
     loop_count = 0  # 현 컨테이너의 작업 횟수
@@ -82,6 +113,11 @@ def runner(run_type: str):
 
             work_id = content['work_id']
             goal_cnt = content['goal_cnt']
+
+            if container_work_id and container_work_id != int(work_id):
+                # container를 실행시킨 work_id와 가져온 queue의 work_id가 다를 경우 pass
+                # 동시 작업의 경우 더 나은 방법 고려해보기
+                sqs_queue.put(content)
 
             # 내부 작업 로그 insert
             queue_meta = {
