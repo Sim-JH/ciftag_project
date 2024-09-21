@@ -12,6 +12,7 @@ class Logger:
         log_folder = conf.get("dir", "base_log_dir")
         today_file = time.strftime("%Y%m%d", tz_converter())
 
+        self.log_dir = log_dir
         self.log_path = f"{log_folder}/{log_dir}"
         os.makedirs(self.log_path, exist_ok=True)
 

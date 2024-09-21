@@ -38,3 +38,8 @@ class RedisManager:
     def add_set_to_redis(self, name: str, val: str):
         """redis set 추가"""
         self.redis.sadd(name, val)
+
+    def delete_set_from_redis(self, name: str):
+        """redis set 추가"""
+        self.redis.sadd(name)
+

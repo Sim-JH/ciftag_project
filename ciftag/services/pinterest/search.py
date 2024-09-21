@@ -20,7 +20,7 @@ def search(logs, task_id, page, redis_name, tag, goal_cnt, min_width=None, max_w
 
     page.goto(f"https://www.pinterest.com/search/pins/?q={tag}")
     page.wait_for_load_state("networkidle")
-    page.wait_for_timeout(3*600)
+    page.wait_for_timeout(60000)
 
     redis_m = RedisManager()
     _continue_flag = True

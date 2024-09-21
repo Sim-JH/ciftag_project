@@ -16,6 +16,7 @@ from ciftag.settings import SERVER_TYPE, TIMEZONE, env_key
 from ciftag.models import enums
 from ciftag.utils.converter import get_traceback_str
 from ciftag.integrations.sqs import SqsManger
+from ciftag.integrations.redis import RedisManager
 from ciftag.scripts.common import check_task_status, aggregate_task_result, insert_task_status, update_task_status
 
 logs = logger.Logger('AWS')
@@ -28,6 +29,10 @@ def exit_handler():
     # work_id == ecs task 그룹 / 각 task는 대상 사이트를 1개씩만 할당
     # if 현재 컨테이너가 실행 중인 ecs 중 마자막일 경우
     if result is None or len(result) == 0:
+        global REDIS_NAME
+        redis_m = RedisManager()
+        redis_m.delete_set_from_redis(REDIS_NAME)
+
         task_result = aggregate_task_result(work_id=_work_id)
 
         # TODO airflow 상위 task dag 구현 이후 동적 호출 방법 수정
@@ -71,7 +76,7 @@ except Exception as e:
 
 host_name = check_output(["hostname"]).strip().decode("utf-8").replace("-", ".")
 runner_identify = f"{real_ip}_{host_name}_{str(round(time.time() * 1000))}"
-
+REDIS_NAME = ""
 
 def runner(run_type: str, container_work_id: int):
     # container별 log_name 지정 필요하려나?
@@ -138,7 +143,12 @@ def runner(run_type: str, container_work_id: int):
             logs.log_data(f"{runner_identify} SQS loop count : {loop_count}")
 
             try:
+                global REDIS_NAME
+
                 if run_type == "pinterest":
+                    from ciftag.services.pinterest import PAGETYPE
+                    REDIS_NAME = f"{SERVER_TYPE}_{PAGETYPE}_{work_id}"
+
                     result = pinterest.run(
                         task_id,
                         work_id,
@@ -146,7 +156,8 @@ def runner(run_type: str, container_work_id: int):
                         content['cred_info'],
                         runner_identify,
                         goal_cnt,
-                        content['data']
+                        content['data'],
+                        REDIS_NAME
                     )
 
                 # 실패 시 큐 재삽입

@@ -8,22 +8,28 @@ from typing import Any, Dict, List
 from celery.exceptions import MaxRetriesExceededError
 
 import ciftag.utils.logger as logger
-from ciftag.settings import TIMEZONE, env_key
+from ciftag.settings import TIMEZONE, SERVER_TYPE, env_key
 from ciftag.utils.converter import get_traceback_str
 from ciftag.exceptions import CiftagWorkException
 from ciftag.celery_app import app
 from ciftag.models import enums
+from ciftag.integrations.redis import RedisManager
 from ciftag.scripts.common import insert_task_status, update_task_status
+from ciftag.services.pinterest import PAGETYPE
 from ciftag.services.pinterest.run import run
 
 logs = logger.Logger(log_dir='Pinterest')
-
+REDIS_NAME = ""
 
 @app.task(bind=True, name="ciftag.task.pinterest_run", max_retries=0)
 def run_pinterest(
         self, work_id: int, pint_id: int, cred_info: Dict[str, Any], goal_cnt: int, data: Dict[str, Any]
 ) -> Dict[str, Any]:
     """핀터레스트 크롤러 실행"""
+    # set redis name
+    global REDIS_NAME
+    REDIS_NAME = f"{SERVER_TYPE}_{PAGETYPE}_{work_id}"
+
     # 내부 작업 식별자 생성(worker) 및 내부 작업 로그 등록
     time.sleep(random.randrange(1, 3))
     runner_identify = f"{work_id}_{self.request.id}_{str(round(time.time() * 1000))}"
@@ -46,7 +52,7 @@ def run_pinterest(
 
     try:
         for attempt in range(env_key.MAX_RETRY):
-            result = run(task_id, work_id, pint_id, cred_info, runner_identify, goal_cnt, data)
+            result = run(task_id, work_id, pint_id, cred_info, runner_identify, goal_cnt, data, REDIS_NAME)
 
             # 작업 성공
             if result['result']:
@@ -54,7 +60,6 @@ def run_pinterest(
                     'task_sta': enums.TaskStatusCode.success.name,
                     'end_dt': result['end_dt']
                 })
-                del result['end_dt']
                 return result
 
             # 재시도 대상
@@ -104,6 +109,10 @@ def after_pinterest(self, results: List[Dict[str, Any]], work_id: int, pint_id: 
     from ciftag.web.crud.common import update_work_status
     # 외부 작업 로그 update
     update_work_status(work_id, {'work_sta': enums.WorkStatusCode.postproc})
+
+    global REDIS_NAME
+    redis_m = RedisManager()
+    redis_m.delete_set_from_redis(REDIS_NAME)
 
     # 결과 집계
     hits = 0

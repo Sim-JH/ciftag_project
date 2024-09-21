@@ -31,7 +31,7 @@ class UserRoleCode(Enum):
 class CrawlTargetCode(Enum):
     """크롤링 목표 사이트"""
     pinterest = "1"  # https://www.pinterest.com
-    danbooru = "2"  # https://danbooru.donmai.us/
+    tumblr = "2"  # https://www.tumblr.com
 
 
 class CrawlStatusCode(Enum):

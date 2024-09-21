@@ -2,7 +2,7 @@ import os
 import time
 import random
 from datetime import datetime
-from typing import Any, Dict, Union
+from typing import Any, Dict
 
 from playwright.sync_api import sync_playwright
 
@@ -13,7 +13,7 @@ from ciftag.models import enums
 from ciftag.scripts.common import update_task_status
 from ciftag.scripts.pinterest import insert_pint_result
 from ciftag.services.pinterest import PAGETYPE
-from ciftag.services.pinterest.wrapper import execute_with_logging
+from ciftag.services.wrapper import execute_with_logging
 from ciftag.services.pinterest import (
     login,
     search,
@@ -31,6 +31,7 @@ def run(
         runner_identify: str,
         goal_cnt: int,
         data: Dict[str, Any],
+        redis_name: str,
         headless: bool = True
 ):
     """ 핀터레스트 크롤러
@@ -41,6 +42,7 @@ def run(
     :param runner_identify: 처리기 식별자
     :param goal_cnt: 목표 수량
     :param data: 메타 데이터
+    :param redis_name:  redis set name
     :param headless: 헤드리스 모드 여부
     """
     time.sleep(random.randrange(1, 10))
@@ -57,9 +59,6 @@ def run(
     # 이미지 크기 범위 지정 시
     min_width = int(data['min_width']) if int(data.get('min_width')) else None
     max_width = int(data.get('max_width')) if int(data.get('max_width')) else None
-
-    # redis set name
-    redis_name = f"{SERVER_TYPE}_{PAGETYPE}_{work_id}"
 
     # pw 암호 키 존재 시
     if crypto_key := os.getenv('crypto_key'):
