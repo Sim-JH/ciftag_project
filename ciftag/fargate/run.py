@@ -62,7 +62,6 @@ def exit_handler():
                     logs.log_data(f"--- Exit dag Fail: {e}")
 
 
-atexit.register(exit_handler)  # 프로세스 종료시 호출
 _work_id = 0
 
 try:
@@ -78,7 +77,10 @@ host_name = check_output(["hostname"]).strip().decode("utf-8").replace("-", ".")
 runner_identify = f"{real_ip}_{host_name}_{str(round(time.time() * 1000))}"
 REDIS_NAME = ""
 
+
 def runner(run_type: str, container_work_id: int):
+    atexit.register(exit_handler)  # 프로세스 종료시 호출
+
     # container별 log_name 지정 필요하려나?
     # container_ip = check_output(["curl", "https://lumtest.com/myip"])
     global _work_id
@@ -190,7 +192,7 @@ def runner(run_type: str, container_work_id: int):
                 update_task_status(task_id, {
                     'task_sta': enums.TaskStatusCode.failed.name,
                     'msg': f'UnExpect Exception in Pinterest Local task_id: {task_id}',
-                    'traceback': get_traceback_str(exc.__traceback__),
+                    'traceback': get_traceback_str(exc),
                 })
 
                 logs.log_data(

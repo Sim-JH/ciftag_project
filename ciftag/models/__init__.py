@@ -4,3 +4,4 @@ from ciftag.models.user import *
 from ciftag.models.credential import *
 from ciftag.models.crawl import *
 from ciftag.models.pinterest import *
+from ciftag.models.tumblr import *

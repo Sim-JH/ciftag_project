@@ -23,6 +23,6 @@ class CredentialInfo(Base, TimestampMixin):
     etc = Column(String, nullable=True)
 
     # 사용자의 사이트 별 id는 unique
-    __table_args__ = (UniqueConstraint('user_pk', 'cred_ident', name='target_code'),)
+    __table_args__ = (UniqueConstraint('user_pk', 'cred_ident', 'target_code', name='cred_unique'),)
 
 

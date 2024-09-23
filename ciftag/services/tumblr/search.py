@@ -14,13 +14,13 @@ def get_image_width(url):
 
 
 def search(logs, task_id, page, redis_name, tag, goal_cnt, min_width=None, max_width=None):
-    # logs.log_data(f'--- Task-{task_id} {PAGETYPE} 검색 시작: {tag}')
+    logs.log_data(f'--- Task-{task_id} {PAGETYPE} 검색 시작: {tag}')
     # 상태 업데이트
-    # update_task_status(task_id, {'task_sta': enums.TaskStatusCode.search.name})
+    update_task_status(task_id, {'task_sta': enums.TaskStatusCode.search.name})
 
-    page.goto(f"https://www.tumblr.com/tagged/{tag}/photo?src=typed_query&sort=recent")
+    page.goto(f"https://www.tumblr.com/search/{tag}/photo?src=typed_query&sort=recent")
     page.wait_for_load_state("networkidle")
-    # page.wait_for_timeout(60000)
+    page.wait_for_timeout(60000)
 
     redis_m = RedisManager()
     _continue_flag = True
@@ -104,8 +104,6 @@ def search(logs, task_id, page, redis_name, tag, goal_cnt, min_width=None, max_w
                     "height": height,
                     "width": width,
                 })
-
-                print(f'posts: {posts}')
 
             except Exception as e:
                 logs.log_data(f'Error On Searching Continue: {e}')
