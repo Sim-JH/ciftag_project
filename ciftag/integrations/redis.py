@@ -1,6 +1,9 @@
 from redis import Redis
 
+import ciftag.utils.logger as logger
 from ciftag.settings import env_key
+
+logs = logger.Logger(log_dir='Redis')
 
 
 class RedisManager:
@@ -40,6 +43,9 @@ class RedisManager:
         self.redis.sadd(name, val)
 
     def delete_set_from_redis(self, name: str):
-        """redis set 추가"""
-        self.redis.sadd(name)
+        """사용한 redis set 삭제"""
+        if not self.redis.exists(name):
+            logs.log_data(f'Redis Name Not Exsist: {name}')
+        else:
+            self.redis.delete(name)
 
