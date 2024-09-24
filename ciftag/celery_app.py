@@ -11,6 +11,7 @@ app = Celery(
     broker_connection_retry_on_startup=True,  # 시작시 브로커 연결 재시도 제어 여부
     include=[
         "ciftag.tasks.pinterest",
+        "ciftag.tasks.tumblr",
         "ciftag.tasks.download",
         "ciftag.tasks.callbacks"
     ],

@@ -58,7 +58,8 @@ async def add_crawl_info_with_trigger(request):
             CredentialInfo.cred_pw,
             CredentialInfo.status_code
         ).filter(
-            CredentialInfo.user_pk == data['user_pk']
+            CredentialInfo.user_pk == data['user_pk'],
+            CredentialInfo.target_code == data['target_code'],
         ).order_by(CredentialInfo.updated_at).all()
 
     active_list = []

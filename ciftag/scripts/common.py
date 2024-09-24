@@ -11,7 +11,7 @@ logs = logger.Logger(log_dir='sql')
 def check_task_status(work_id):
     """내부 작업 현황 조회"""
     task_sql = f"""SELECT task_sta FROM task_info 
-                    WHERE work_id = {work_id} AND task_sta = load"""
+                    WHERE work_pk = {work_id} AND task_sta = 'load'"""
 
     result = select_sql(task_sql)
 

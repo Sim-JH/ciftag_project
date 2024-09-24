@@ -24,20 +24,17 @@ def convert_enum_in_data(data: Dict[str, Any]) -> Dict[str, Any]:
     return converted_data
 
 
-def get_traceback_str(traceback_obj=None) -> str:
-    """traceback most recent call last -> most recent call first 조정 및 출력 포멧 조정"""
-    if traceback_obj is None:
+def get_traceback_str(exc=None) -> str:
+    """Traceback most recent call last -> most recent call first 조정 및 출력 포맷 조정"""
+    if exc is None:
         lines = traceback.format_exc().strip().split('\n')
     else:
-        if isinstance(traceback_obj, str):
-            lines = traceback_obj.strip().split('\n')
-        else:
-            lines = ''.join(traceback.format_exception(None, None, traceback_obj)).strip().split('\n')
+        # 예외 객체의 타입, 예외 객체, traceback을 정확히 전달
+        lines = ''.join(traceback.format_exception(type(exc), exc, exc.__traceback__)).strip().split('\n')
 
-    # 마지막 줄(오류 메시지 부분)을 최상위로
-    error_message = lines[-1]
+    # 마지막 줄(오류 메시지 부분)을 최상위로 이동
+    error_message = lines[-1] if lines else "Unknown Error"
     traceback_lines = lines[:-1]
     formatted_traceback = [error_message] + traceback_lines
 
     return '\n'.join(formatted_traceback)
-

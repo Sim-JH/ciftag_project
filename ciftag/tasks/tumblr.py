@@ -15,14 +15,15 @@ from ciftag.celery_app import app
 from ciftag.models import enums
 from ciftag.integrations.redis import RedisManager
 from ciftag.scripts.common import insert_task_status, update_task_status
-from ciftag.services.pinterest import PAGETYPE
-from ciftag.services.pinterest.run import run
+from ciftag.services.tumblr import PAGETYPE
+from ciftag.services.tumblr.run import run
 
-logs = logger.Logger(log_dir='Pinterest')
+logs = logger.Logger(log_dir='Tumblr')
 REDIS_NAME = ""
 
-@app.task(bind=True, name="ciftag.task.pinterest_run", max_retries=0)
-def run_pinterest(
+
+@app.task(bind=True, name="ciftag.task.tumblr_run", max_retries=0)
+def run_tumblr(
         self, work_id: int, pint_id: int, cred_info: Dict[str, Any], goal_cnt: int, data: Dict[str, Any]
 ) -> Dict[str, Any]:
     """핀터레스트 크롤러 실행"""
@@ -107,8 +108,8 @@ def run_pinterest(
         )
 
 
-@app.task(bind=True, name="ciftag.task.pinterest_after", max_retries=0)
-def after_pinterest(self, results: List[Dict[str, Any]], work_id: int, pint_id: int):
+@app.task(bind=True, name="ciftag.task.tumblr_after", max_retries=0)
+def after_tumblr(self, results: List[Dict[str, Any]], work_id: int, pint_id: int):
     from ciftag.models import enums
     from ciftag.web.crud.common import update_work_status
     # 외부 작업 로그 update
@@ -128,26 +129,27 @@ def after_pinterest(self, results: List[Dict[str, Any]], work_id: int, pint_id: 
         if (e_time := float(result['elapsed_time'])) > elapsed_time:
             elapsed_time = e_time
 
-    airflow_param = {
-        'work_id': work_id,
-        'pint_id': pint_id,
-        'hits': hits,
-        'elapsed_time': elapsed_time,
-    }
-
-    try:
-        url = f"http://{env_key.AIRFLOW_URI}:{env_key.AIRFLOW_PORT}/api/v1/dags/run-after-pinterest/dagRuns"
-        headers = {
-            "content-type": "application/json",
-            "Accept": "application/json",
-        }
-        response = requests.post(
-            url,
-            json={"conf": airflow_param},
-            headers=headers,
-            auth=(env_key.AIRFLOW_USERNAME, env_key.AIRFLOW_PASSWORD),
-            verify=False  # crt 인증서 airflow 적용 시 수정 & https
-        )
-        logs.log_data(f"--- Exit dag Success: {response.status_code}")
-    except Exception as e:
-        logs.log_data(f"--- Exit dag Fail: {e}")
+    # TODO 상위 DAG 만든 이후에 tasks pinterest와 공동된 airflow 실행 함수 쓰기
+    # airflow_param = {
+    #     'work_id': work_id,
+    #     'pint_id': pint_id,
+    #     'hits': hits,
+    #     'elapsed_time': elapsed_time,
+    # }
+    #
+    # try:
+    #     url = f"http://{env_key.AIRFLOW_URI}:{env_key.AIRFLOW_PORT}/api/v1/dags/run-after-tumblr/dagRuns"
+    #     headers = {
+    #         "content-type": "application/json",
+    #         "Accept": "application/json",
+    #     }
+    #     response = requests.post(
+    #         url,
+    #         json={"conf": airflow_param},
+    #         headers=headers,
+    #         auth=(env_key.AIRFLOW_USERNAME, env_key.AIRFLOW_PASSWORD),
+    #         verify=False  # crt 인증서 airflow 적용 시 수정 & https
+    #     )
+    #     logs.log_data(f"--- Exit dag Success: {response.status_code}")
+    # except Exception as e:
+    #     logs.log_data(f"--- Exit dag Fail: {e}")
