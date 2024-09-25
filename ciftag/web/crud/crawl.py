@@ -27,9 +27,9 @@ async def add_crawl_info_with_trigger(request):
     data = request.dict()
     tag_list = data['tags']
 
-    # 핀터레스트는 단일 태그만 허용
-    if data['target_code'] == "pinterest" and len(tag_list) > 0:
-        raise CiftagAPIException('Pinterest Accept Only One Tag', 422)
+    # 단일 태그만 허용하는 사이트
+    if (data['target_code'] == "pinterest" or data['target_code'] == "tumblr") and len(tag_list) > 0:
+        raise CiftagAPIException('Target is Accept Only One Tag', 422)
 
     data['tags'] = "/".join(tag_list)
 

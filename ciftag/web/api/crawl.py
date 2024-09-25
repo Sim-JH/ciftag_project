@@ -33,8 +33,7 @@ async def post_crawl_image(
     request: CrawlRequestBase
 ):
     """크롤링 요청 (사용자는 해당 사이트에 등록해놓은 id가 있어야 함)"""
-    # TODO min_height/max_height/min_width/max_width는 비고로
-    # TODO target_codesms 여러개 가능
+    # 동일 태그 여러개 사이트에 대한 요청은 API 호출 측에서 분산하여 요청
     # limit_request(user_pk)  # TODO to many request 구현하기
     return await add_crawl_info_with_trigger(request)
 
