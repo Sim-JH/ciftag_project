@@ -118,6 +118,9 @@ def runner(run_type: str, container_work_id: int):
             re_call = 1
             sqs_queue.delete()
 
+            global REDIS_NAME
+            REDIS_NAME = content['redis_name']
+
             work_id = content['work_id']
             goal_cnt = content['goal_cnt']
 
@@ -145,16 +148,11 @@ def runner(run_type: str, container_work_id: int):
             logs.log_data(f"{runner_identify} SQS loop count : {loop_count}")
 
             try:
-                global REDIS_NAME
-
                 if run_type == "pinterest":
-                    from ciftag.services.pinterest import PAGETYPE
-                    REDIS_NAME = f"{SERVER_TYPE}_{PAGETYPE}_{work_id}"
-
                     result = pinterest.run(
                         task_id,
                         work_id,
-                        content['pint_id'],
+                        content['info_id'],
                         content['cred_info'],
                         runner_identify,
                         goal_cnt,

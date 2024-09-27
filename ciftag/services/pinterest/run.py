@@ -26,7 +26,7 @@ USERAGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 
 def run(
         task_id: int,
         work_id: int,
-        pint_id: int,
+        info_id: int,
         cred_info: Dict[str, Any],
         runner_identify: str,
         goal_cnt: int,
@@ -37,7 +37,7 @@ def run(
     """ 핀터레스트 크롤러
     :param task_id: 내부 작업 ID
     :param work_id: 외부 작업 ID
-    :param pint_id: 수행 정보 ID
+    :param info_id: 수행 정보 ID
     :param cred_info: 계정 정보
     :param runner_identify: 처리기 식별자
     :param goal_cnt: 목표 수량
@@ -107,7 +107,7 @@ def run(
 
     for pin in pins:
         pin.update({
-            'pint_pk': pint_id,
+            'pint_pk': info_id,
             'run_on': run_on['name'],
             'download': False
         })

@@ -6,7 +6,7 @@ from ciftag.exceptions import CiftagWorkException
 from ciftag.celery_app import app
 
 
-logs = logger.Logger('callback')
+logs = logger.Logger('Celery')
 
 
 # 미사용으로 변경. 추후 chain 작업 필요시 고려

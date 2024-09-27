@@ -26,7 +26,7 @@ USERAGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 
 def run(
         task_id: int,
         work_id: int,
-        tumb_id: int,
+        info_id: int,
         cred_info: Dict[str, Any],
         runner_identify: str,
         goal_cnt: int,
@@ -103,7 +103,7 @@ def run(
 
     for post in posts:
         post.update({
-            'tumb_pk': tumb_id,
+            'tumb_pk': info_id,
             'run_on': run_on['name'],
             'title': "",  # tumblr는 title 임시
             'detail_link': "",  # 마찬가지로 임시
