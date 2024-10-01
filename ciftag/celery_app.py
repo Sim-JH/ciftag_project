@@ -12,6 +12,7 @@ app = Celery(
     include=[
         "ciftag.tasks.pinterest",
         "ciftag.tasks.tumblr",
+        "ciftag.tasks.flickr",
         "ciftag.tasks.download",
         "ciftag.tasks.callbacks"
     ],

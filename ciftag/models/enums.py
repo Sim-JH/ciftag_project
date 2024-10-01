@@ -32,6 +32,7 @@ class CrawlTargetCode(Enum):
     """크롤링 목표 사이트"""
     pinterest = "1"  # https://www.pinterest.com
     tumblr = "2"  # https://www.tumblr.com
+    flickr = "3"  # https://www.flickr.com
 
 
 class CrawlStatusCode(Enum):

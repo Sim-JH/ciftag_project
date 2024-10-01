@@ -8,7 +8,7 @@ from ciftag.exceptions import CiftagAPIException
 from ciftag.celery_app import app
 from ciftag.utils.crypto import CiftagCrypto
 from ciftag.utils.converter import convert_enum_in_data
-from ciftag.models import PinterestCrawlInfo, TumblrCrawlInfo, enums
+from ciftag.models import PinterestCrawlInfo, TumblrCrawlInfo, FlickrCrawlInfo, enums
 from ciftag.integrations.sqs import SqsManger
 from ciftag.web.crud.core import insert_orm
 from ciftag.web.crud.common import insert_work_status, update_work_status
@@ -161,6 +161,8 @@ class CrawlTriggerDispatcher:
             self._trigger_services(PinterestCrawlInfo, work_id, crawl_pk)
         elif self.target_code == enums.CrawlTargetCode.tumblr:
             self._trigger_services(TumblrCrawlInfo, work_id, crawl_pk)
+        elif self.target_code == enums.CrawlTargetCode.flickr:
+            self._trigger_services(FlickrCrawlInfo, work_id, crawl_pk)
 
         return work_id
 
