@@ -11,10 +11,10 @@ import ciftag.utils.crypto as crypto
 from ciftag.settings import TIMEZONE, SERVER_TYPE
 from ciftag.models import enums
 from ciftag.scripts.common import update_task_status
-from ciftag.scripts.tumblr import insert_tumb_result
-from ciftag.services.tumblr import PAGETYPE
+from ciftag.scripts.flickr import insert_flk_result
+from ciftag.services.flickr import PAGETYPE
 from ciftag.services.wrapper import execute_with_logging
-from ciftag.services.tumblr import (
+from ciftag.services.flickr import (
     login,
     search,
 )
@@ -34,7 +34,7 @@ def run(
         redis_name = str,
         headless: bool = True
 ):
-    """ 텀블러 크롤러
+    """ 플리커 크롤러
     :param task_id: 내부 작업 ID
     :param work_id: 외부 작업 ID
     :param info_id: 수행 정보 ID
@@ -53,7 +53,7 @@ def run(
     cred_id = cred_info['cred_id']
     cred_pw = cred_info['cred_pw']
     run_on = data['run_on']
-    tag: str = data['tags']  # 텀블러는 구조 상 단일 태그
+    tag_list: list = data['tags'].split('/')
 
     # 이미지 크기 범위 지정 시
     min_width = int(data['min_width']) if int(data.get('min_width')) else None
@@ -87,7 +87,7 @@ def run(
 
         # 이미지 리스트 추출
         result = execute_with_logging(
-            search.search, logs, task_id, result['page'], redis_name, tag, goal_cnt, min_width, max_width
+            search.search, logs, task_id, result['page'], redis_name, tag_list, goal_cnt, min_width, max_width
         )
 
         if not result['result']:
@@ -97,22 +97,20 @@ def run(
         browser.close()
 
     # 결과 적재
-    posts = result['posts']
+    photos = result['photos']
     logs.log_data(f'--- Task-{task_id} {PAGETYPE} 결과 적재')
-    update_task_status(task_id, {'task_sta': enums.TaskStatusCode.result.name, 'get_cnt': len(posts)})
+    update_task_status(task_id, {'task_sta': enums.TaskStatusCode.result.name, 'get_cnt': len(photos)})
 
-    for post in posts:
-        post.update({
-            'tumb_pk': info_id,
+    for photo in photos:
+        photo.update({
+            'flk_pk': info_id,
             'run_on': run_on['name'],
-            'title': "",  # tumblr는 title 임시
-            'detail_link': "",  # 마찬가지로 임시
             'download': False
         })
 
-        insert_tumb_result(post)
+        insert_flk_result(photo)
 
     end_dt = datetime.now(TIMEZONE)
     elapsed_time = time.time() - start_time
 
-    return {'result': True, 'hits': len(posts), 'elapsed_time': elapsed_time, 'end_dt': end_dt}
+    return {'result': True, 'hits': len(photos), 'elapsed_time': elapsed_time, 'end_dt': end_dt}
