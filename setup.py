@@ -4,7 +4,7 @@ setup(
     name="ciftag",
     description="ciftag module",
     author="sjh",
-    version="0.1.1",
+    version="0.1.2",
     packages=find_packages(include=['ciftag']),
     scripts=['ciftag/bin/ciftag'],
     include_package_data=True,
