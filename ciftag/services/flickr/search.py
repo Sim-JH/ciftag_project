@@ -120,7 +120,7 @@ def search(logs, task_id, page, redis_name, tag_list, goal_cnt, min_width=None, 
 
         if _continue_flag:
             page.go_back()
-            page.wait_for_load_state("networkidle")
+            page.wait_for_load_state("networkidle", timeout=60000 * 3)
             time.sleep(5)
 
             # 페이지 끝에 도달했는지 확인
