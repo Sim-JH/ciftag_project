@@ -72,123 +72,121 @@ def download_image_from_url_service(target_code: str, request):
     return len(records)
 
 
-# def download_image_by_tags_service(
-#         mode: str, tags: List[str], zip_path: str, target_size, threshold: float
-# ):
-#     dbm = DBManager()
-#
-#     # tag + url 가져오기
-#     with (dbm.create_session() as session):
-#         pint = session.query(
-#             CrawlRequestInfo.id.label('crawl_id'),
-#             PinterestCrawlInfo.id.label('info_id'),
-#             PinterestCrawlData.id.label('data_id'),
-#             PinterestCrawlData.image_url,
-#         ).join(
-#             PinterestCrawlInfo, PinterestCrawlData.pint_pk == PinterestCrawlInfo.id
-#         ).join(
-#             CrawlRequestInfo, PinterestCrawlInfo.crawl_pk == CrawlRequestInfo.id
-#         ).filter(
-#             PinterestCrawlInfo.tags.in_(tags),
-#         )
-#
-#         thumb = session.query(
-#             CrawlRequestInfo.id.label('crawl_id'),
-#             TumblrCrawlInfo.id.label('info_id'),
-#             TumblrCrawlData.id.label('data_id'),
-#             TumblrCrawlData.image_url,
-#         ).join(
-#             TumblrCrawlInfo, TumblrCrawlData.tumb_pk == TumblrCrawlInfo.id
-#         ).join(
-#             CrawlRequestInfo, TumblrCrawlInfo.crawl_pk == CrawlRequestInfo.id
-#         ).filter(
-#             TumblrCrawlInfo.tags.in_(tags)
-#         )
-#
-#         flk = session.query(
-#             CrawlRequestInfo.id.label('crawl_id'),
-#             FlickrCrawlInfo.id.label('info_id'),
-#             FlickrCrawlData.id.label('data_id'),
-#             FlickrCrawlData.image_url,
-#         ).join(
-#             FlickrCrawlInfo, FlickrCrawlData.flk_pk == FlickrCrawlInfo.id
-#         ).join(
-#             CrawlRequestInfo, FlickrCrawlInfo.crawl_pk == CrawlRequestInfo.id
-#         ).filter(
-#             FlickrCrawlInfo.tags.op('~')('|'.join(tags))  # 정규식 기반 검색
-#         )
-#
-#         # Full-Text Search (Postgresql only) 형태소 기반 검색시
-#         # or_(
-#         #     func.to_tsvector('korean', FlickrCrawlInfo.tags).match(tags),
-#         #     func.to_tsvector('english', FlickrCrawlInfo.tags).match(tags)
-#         # )
-#
-#         if target_size:
-#             pint.filter(
-#                 between(
-#                     PinterestCrawlData.width,
-#                     target_size[0] * 0.9,
-#                     target_size[0] * 1.1
-#                 ),
-#                 # height가 target_size[1]의 ±10% 내외인지 확인
-#                 between(
-#                     PinterestCrawlData.height,
-#                     target_size[1] * 0.9,
-#                     target_size[1] * 1.1
-#                 ),
-#             )
-#
-#             thumb.filter(
-#                 between(
-#                     TumblrCrawlData.width,
-#                     target_size[0] * 0.9,
-#                     target_size[0] * 1.1
-#                 ),
-#                 # height가 target_size[1]의 ±10% 내외인지 확인
-#                 between(
-#                     TumblrCrawlData.height,
-#                     target_size[1] * 0.9,
-#                     target_size[1] * 1.1
-#                 ),
-#             )
-#
-#             flk.filter(
-#                 between(
-#                     FlickrCrawlData.width,
-#                     target_size[0] * 0.9,
-#                     target_size[0] * 1.1
-#                 ),
-#                 # height가 target_size[1]의 ±10% 내외인지 확인
-#                 between(
-#                     FlickrCrawlData.height,
-#                     target_size[1] * 0.9,
-#                     target_size[1] * 1.1
-#                 ),
-#             )
-#
-#         query = union(pint, thumb, flk)
-#         records = session.execute(query).fetchall()
-#
-#     # orm -> dict
-#     records = [dict(record._mapping) for record in records]
-#
-#     # celery run
-#     download_img_tag_s = app.signature(
-#         "ciftag.task.download_images_by_tags",
-#         kwargs={
-#             'mode': mode,
-#             'tags': "/".join(tags),
-#             'zip_path': zip_path,
-#             'target_size': target_size,
-#             'records': records,
-#             'threshold': threshold,
-#         }
-#     )
-#
-#     download_img_tag_s.apply_async()
-#
-#     return len(records)
+def download_image_by_tags_service(
+        tags: List[str], zip_path: str, target_size, threshold: float
+):
+    dbm = DBManager()
+
+    # tag + url 가져오기
+    with (dbm.create_session() as session):
+        pint = session.query(
+            CrawlRequestInfo.id.label('crawl_id'),
+            PinterestCrawlInfo.id.label('info_id'),
+            PinterestCrawlData.id.label('data_id'),
+            PinterestCrawlData.image_url,
+        ).join(
+            PinterestCrawlInfo, PinterestCrawlData.pint_pk == PinterestCrawlInfo.id
+        ).join(
+            CrawlRequestInfo, PinterestCrawlInfo.crawl_pk == CrawlRequestInfo.id
+        ).filter(
+            PinterestCrawlInfo.tags.in_(tags),
+        )
+
+        thumb = session.query(
+            CrawlRequestInfo.id.label('crawl_id'),
+            TumblrCrawlInfo.id.label('info_id'),
+            TumblrCrawlData.id.label('data_id'),
+            TumblrCrawlData.image_url,
+        ).join(
+            TumblrCrawlInfo, TumblrCrawlData.tumb_pk == TumblrCrawlInfo.id
+        ).join(
+            CrawlRequestInfo, TumblrCrawlInfo.crawl_pk == CrawlRequestInfo.id
+        ).filter(
+            TumblrCrawlInfo.tags.in_(tags)
+        )
+
+        flk = session.query(
+            CrawlRequestInfo.id.label('crawl_id'),
+            FlickrCrawlInfo.id.label('info_id'),
+            FlickrCrawlData.id.label('data_id'),
+            FlickrCrawlData.image_url,
+        ).join(
+            FlickrCrawlInfo, FlickrCrawlData.flk_pk == FlickrCrawlInfo.id
+        ).join(
+            CrawlRequestInfo, FlickrCrawlInfo.crawl_pk == CrawlRequestInfo.id
+        ).filter(
+            FlickrCrawlInfo.tags.op('~')('|'.join(tags))  # 정규식 기반 검색
+        )
+
+        # Full-Text Search (Postgresql only) 형태소 기반 검색시
+        # or_(
+        #     func.to_tsvector('korean', FlickrCrawlInfo.tags).match(tags),
+        #     func.to_tsvector('english', FlickrCrawlInfo.tags).match(tags)
+        # )
+
+        if target_size:
+            pint.filter(
+                between(
+                    PinterestCrawlData.width,
+                    target_size[0] * 0.9,
+                    target_size[0] * 1.1
+                ),
+                # height가 target_size[1]의 ±10% 내외인지 확인
+                between(
+                    PinterestCrawlData.height,
+                    target_size[1] * 0.9,
+                    target_size[1] * 1.1
+                ),
+            )
+
+            thumb.filter(
+                between(
+                    TumblrCrawlData.width,
+                    target_size[0] * 0.9,
+                    target_size[0] * 1.1
+                ),
+                # height가 target_size[1]의 ±10% 내외인지 확인
+                between(
+                    TumblrCrawlData.height,
+                    target_size[1] * 0.9,
+                    target_size[1] * 1.1
+                ),
+            )
+
+            flk.filter(
+                between(
+                    FlickrCrawlData.width,
+                    target_size[0] * 0.9,
+                    target_size[0] * 1.1
+                ),
+                # height가 target_size[1]의 ±10% 내외인지 확인
+                between(
+                    FlickrCrawlData.height,
+                    target_size[1] * 0.9,
+                    target_size[1] * 1.1
+                ),
+            )
+
+        query = union(pint, thumb, flk)
+        records = session.execute(query).fetchall()
+
+    # orm -> dict
+    records = [dict(record._mapping) for record in records]
+
+    # celery run
+    download_img_tag_s = app.signature(
+        "ciftag.task.download_images_by_tags",
+        kwargs={
+            'tags': "/".join(tags),
+            'zip_path': zip_path,
+            'records': records,
+            'threshold': threshold,
+        }
+    )
+
+    download_img_tag_s.apply_async()
+
+    return len(records)
 
 
 
