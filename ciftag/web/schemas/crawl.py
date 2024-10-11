@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional, List
 
 from pydantic import BaseModel, Field
@@ -14,7 +15,7 @@ class CrawlBase(BaseModel):
                     + ", ".join([f"{e.name}: {e.value}" for e in enums.CrawlTargetCode])
     )  # TODO 추후에는 복수의 target에 대해 요청이 가능하도록
     run_on: enums.RunOnCode = Field(
-        None,
+        "0",
         title="실행 환경 코드",
         description="실행 환경 코드의 값은 다음과 같습니다: "
                     + ", ".join([f"{e.name}: {e.value}" for e in enums.RunOnCode])
@@ -30,8 +31,11 @@ class CrawlRequestBase(CrawlBase):
     max_width: int = Field(0, title="이미지 최대 너비")
 
 
-class CrawlResponseBase(CrawlBase):
+class CrawlInfoResponseBase(CrawlBase):
     id: int = Field(None, title="인덱스")
+    tags: str = Field(None, title="태그 목록")
+    created_at: datetime = Field(title="생성 시간")
+    updated_at: datetime = Field(title="수정 시간")
     etc: Optional[str] = Field(None, title="비고")  # nullable
 
     class Config:
