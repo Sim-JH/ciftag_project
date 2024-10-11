@@ -18,4 +18,17 @@ class CrawlInfoResponse(CrawlInfoResponseBase):
 
 class CrawlDataResponse(ImgDataBase):
     id: int = Field(None, title="인덱스")
-    pint_pk: int = Field(None, title="핀터레스트 정보 pk")
+    user_pk: int = Field(None, gt=0, title="사용자 pk")
+    target_code: enums.CrawlTargetCode = Field(
+        "1",
+        title="크롤링 대상 사이트 코드",
+        description="크롤링 대상 사이트 코드의 값은 다음과 같습니다: "
+                    + ", ".join([f"{e.name}: {e.value}" for e in enums.CrawlTargetCode])
+    )
+    run_on: enums.RunOnCode = Field(
+        "0",
+        title="실행 환경 코드",
+        description="실행 환경 코드의 값은 다음과 같습니다: "
+                    + ", ".join([f"{e.name}: {e.value}" for e in enums.RunOnCode])
+    )
+    tags: str = Field(None, title="태그 목록")
