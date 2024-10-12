@@ -5,6 +5,8 @@ from ciftag.models import enums
 from ciftag.scripts.common import update_task_status
 from ciftag.services.tumblr import PAGETYPE
 
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
+
 
 def login(logs, context, task_id, cred_id, cred_pw):
     logs.log_data(f'--- Task-{task_id} {PAGETYPE} 로그인 시작: {cred_id}')
@@ -38,7 +40,7 @@ def login(logs, context, task_id, cred_id, cred_pw):
             page.screenshot(path=f'{os.path.dirname(logs.log_path)}/goto_tmp.png')  # goto timeout 발생 체크
             break
         except Exception as e:
-            if isinstance(e, TimeoutError):
+            if isinstance(e, (PlaywrightTimeoutError, TimeoutError)):
                 logs.log_data(f'{cred_id} {PAGETYPE} login page Timeout 진입 재시도')
             else:
                 logs.log_data(f'{cred_id} {PAGETYPE} login page 진입 재시도: {e}')

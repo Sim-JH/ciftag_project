@@ -7,6 +7,8 @@ from ciftag.scripts.common import update_task_status
 from ciftag.integrations.redis import RedisManager
 from ciftag.services.flickr import PAGETYPE
 
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
+
 
 def get_image_width(url):
     _match = re.search(r'(\d+)w', url)
@@ -84,7 +86,7 @@ def search(logs, task_id, page, redis_name, tag_list, goal_cnt, min_width=None, 
                         page.wait_for_selector("img.main-photo[src]", timeout=60000*2)
                         time.sleep(3)
                         break
-                    except TimeoutError:
+                    except (PlaywrightTimeoutError, TimeoutError):
                         page.reload()
                 else:
                     logs.log_data(f"{link} Element not found, continuing execution")
