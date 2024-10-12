@@ -117,6 +117,23 @@ def search(logs, task_id, page, redis_name, tag, goal_cnt, min_width=None, max_w
             page.wait_for_load_state("networkidle")
             time.sleep(5)
 
+            # 스크롤을 끝까지 내림
+            page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+
+            # 스크롤 후 모든 이미지 로딩 확인
+            for _ in range(5):
+                time.sleep(60)  # 새 콘텐츠 로딩 대기
+                all_images_loaded = page.evaluate('''() => {
+                    const images = document.querySelectorAll("img");
+                    return Array.from(images).every(img => img.complete);
+                }''')
+
+                if all_images_loaded:
+                    break
+            else:
+                logs.log_data('Error On Scroll Continue')
+                raise Exception('Error On Scroll Continue')
+
             # 페이지 끝에 도달했는지 확인
             new_height = page.evaluate("document.body.scrollHeight")
 
@@ -124,8 +141,6 @@ def search(logs, task_id, page, redis_name, tag, goal_cnt, min_width=None, max_w
             if new_height == last_height:
                 break
             else:
-                page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                time.sleep(60)  # 새 콘텐츠 로딩 대기
                 last_height = new_height
 
     return {"result": True, "posts": posts}

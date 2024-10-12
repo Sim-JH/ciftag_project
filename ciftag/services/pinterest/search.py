@@ -50,6 +50,8 @@ def search(logs, task_id, page, redis_name, tag, goal_cnt, min_width=None, max_w
             return pinData;
         }''')
 
+        logs.log_data(f'서치된 핀 갯수: {len(new_pins)}', )
+
         for title, thumbnail_url, link in new_pins:
             if len(pins) >= goal_cnt:
                 _continue_flag = False
@@ -64,11 +66,20 @@ def search(logs, task_id, page, redis_name, tag, goal_cnt, min_width=None, max_w
             redis_m.add_set_to_redis(redis_name, link)
 
             try:
-                # 상세 페이지로 이동하여 원본 이미지 URL 추출
-                page.goto(link)
-                page.wait_for_load_state('domcontentloaded')
-                page.wait_for_selector("img[src], img[srcset]")
-                time.sleep(3)
+                # 타임아웃 발생 시 최대 3회 새로고침 시도
+                for _ in range(3):
+                    # 상세 페이지로 이동하여 원본 이미지 URL 추출
+                    try:
+                        page.goto(link)
+                        page.wait_for_load_state('domcontentloaded')
+                        page.wait_for_selector("img[src], img[srcset]", timeout=60000*2)
+                        time.sleep(3)
+                        break
+                    except TimeoutError:
+                        page.reload()
+                else:
+                    logs.log_data(f"{link} Element not found, continuing execution")
+                    continue
 
                 original_img_element = page.query_selector("img[src], img[srcset]")
 
@@ -144,17 +155,35 @@ def search(logs, task_id, page, redis_name, tag, goal_cnt, min_width=None, max_w
             page.wait_for_load_state("networkidle")
             time.sleep(5)
 
+            # 스크롤을 끝까지 내림
+            page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+
+            # 스크롤 후 모든 이미지 로딩 확인
+            for _ in range(5):
+                time.sleep(60)  # 새 콘텐츠 로딩 대기
+                all_images_loaded = page.evaluate('''() => {
+                    const images = document.querySelectorAll("img");
+                    return Array.from(images).every(img => img.complete);
+                }''')
+
+                if all_images_loaded:
+                    break
+            else:
+                logs.log_data('Error On Scroll Continue')
+                raise Exception('Error On Scroll Continue')
+
             # 페이지 끝에 도달했는지 확인
             new_height = page.evaluate("document.body.scrollHeight")
 
             # 마지막 페이지가 아니면 스크롤
             if new_height == last_height:
+                logs.log_data(f'마지막 페이지 진입 {new_height} {last_height}')
                 break
             else:
-                page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                time.sleep(60)  # 새 콘텐츠 로딩 대기
                 last_height = new_height
-
+    
+    logs.log_data(f'--- Task-{task_id} {PAGETYPE} 검색 종료: {tag}, 검색 갯수: {len(pins)}')
+    
     return {"result": True, "pins": pins}
 
 

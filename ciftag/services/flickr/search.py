@@ -75,11 +75,20 @@ def search(logs, task_id, page, redis_name, tag_list, goal_cnt, min_width=None, 
             redis_m.add_set_to_redis(redis_name, link)
 
             try:
-                # 상세 페이지로 이동하여 원본 이미지 URL 추출
-                page.goto(link)
-                page.wait_for_load_state('domcontentloaded')
-                page.wait_for_selector("img.main-photo[src]")
-                time.sleep(3)
+                # 타임아웃 발생 시 최대 3회 새로고침 시도
+                for _ in range(3):
+                    # 상세 페이지로 이동하여 원본 이미지 URL 추출
+                    try:
+                        page.goto(link)
+                        page.wait_for_load_state('domcontentloaded')
+                        page.wait_for_selector("img.main-photo[src]", timeout=60000*2)
+                        time.sleep(3)
+                        break
+                    except TimeoutError:
+                        page.reload()
+                else:
+                    logs.log_data(f"{link} Element not found, continuing execution")
+                    continue
 
                 img_element = page.query_selector("img.main-photo")
 
@@ -123,6 +132,23 @@ def search(logs, task_id, page, redis_name, tag_list, goal_cnt, min_width=None, 
             page.wait_for_load_state("networkidle", timeout=60000 * 3)
             time.sleep(5)
 
+            # 스크롤을 끝까지 내림
+            page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+
+            # 스크롤 후 모든 이미지 로딩 확인
+            for _ in range(5):
+                time.sleep(60)  # 새 콘텐츠 로딩 대기
+                all_images_loaded = page.evaluate('''() => {
+                    const images = document.querySelectorAll("img");
+                    return Array.from(images).every(img => img.complete);
+                }''')
+
+                if all_images_loaded:
+                    break
+            else:
+                logs.log_data('Error On Scroll Continue')
+                raise Exception('Error On Scroll Continue')
+
             # 페이지 끝에 도달했는지 확인
             new_height = page.evaluate("document.body.scrollHeight")
 
@@ -130,8 +156,6 @@ def search(logs, task_id, page, redis_name, tag_list, goal_cnt, min_width=None, 
             if new_height == last_height:
                 break
             else:
-                page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                time.sleep(60)  # 새 콘텐츠 로딩 대기
                 last_height = new_height
 
     return {"result": True, "photos": photos}
