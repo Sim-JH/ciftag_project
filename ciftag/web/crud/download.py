@@ -73,12 +73,12 @@ def download_image_from_url_service(target_code: str, request):
 
 
 def download_image_by_tags_service(
-        tags: List[str], zip_path: str, target_size, threshold: float
+        tags: List[str], zip_path: str, target_size, threshold: float, model_type: str
 ):
     dbm = DBManager()
 
     # tag + url 가져오기
-    with (dbm.create_session() as session):
+    with dbm.create_session() as session:
         pint = session.query(
             CrawlRequestInfo.id.label('crawl_id'),
             PinterestCrawlInfo.id.label('info_id'),
@@ -90,6 +90,7 @@ def download_image_by_tags_service(
             CrawlRequestInfo, PinterestCrawlInfo.crawl_pk == CrawlRequestInfo.id
         ).filter(
             PinterestCrawlInfo.tags.in_(tags),
+            # PinterestCrawlData.download == False
         )
 
         thumb = session.query(
@@ -102,7 +103,8 @@ def download_image_by_tags_service(
         ).join(
             CrawlRequestInfo, TumblrCrawlInfo.crawl_pk == CrawlRequestInfo.id
         ).filter(
-            TumblrCrawlInfo.tags.in_(tags)
+            TumblrCrawlInfo.tags.in_(tags),
+            # TumblrCrawlData.download == False
         )
 
         flk = session.query(
@@ -115,7 +117,8 @@ def download_image_by_tags_service(
         ).join(
             CrawlRequestInfo, FlickrCrawlInfo.crawl_pk == CrawlRequestInfo.id
         ).filter(
-            FlickrCrawlInfo.tags.op('~')('|'.join(tags))  # 정규식 기반 검색
+            FlickrCrawlInfo.tags.op('~')('|'.join(tags)),  # 정규식 기반 검색
+            # FlickrCrawlData.download == False
         )
 
         # Full-Text Search (Postgresql only) 형태소 기반 검색시
@@ -167,6 +170,7 @@ def download_image_by_tags_service(
                 ),
             )
 
+        # query = union(pint, thumb, flk).limit(100)
         query = union(pint, thumb, flk)
         records = session.execute(query).fetchall()
 
@@ -181,6 +185,7 @@ def download_image_by_tags_service(
             'zip_path': zip_path,
             'records': records,
             'threshold': threshold,
+            'model_type': model_type,
         }
     )
 

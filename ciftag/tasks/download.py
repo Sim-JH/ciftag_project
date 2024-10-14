@@ -130,13 +130,13 @@ def download_images_by_target(self, target, records, success_list=None, api_prox
 
 @app.task(bind=True, name="ciftag.task.download_images_by_tags", max_retries=3)
 def download_images_by_tags(
-        self, tags, zip_path, records, threshold, filtered_list=None, api_proxies=None, ext='png'
+        self, tags, zip_path, records, threshold, model_type, filtered_list=None, api_proxies=None, ext='png'
 ):
     """requests 기반 태그별 이미지 다운로드. 필터 적용 가능. 재시도 최대 3회"""
-    logs.log_data(f'--- Tags: {tags} {self.request.retries+1}회 다운로드. 시작 총 목표 갯수: {len(records)}')
+    logs.log_data(f'--- Tags: {model_type} {tags} {self.request.retries+1}회 다운로드. 시작 총 목표 갯수: {len(records)}')
 
     # 이미지를 저장할 디렉토리
-    base_dir = os.path.join(f'{conf.get('dir', 'img_dir')}/Tags', tags.replace('/', '_'))
+    base_dir = os.path.join(f'{conf.get('dir', 'img_dir')}/Tags', f'{tags.replace('/', '_')}/{model_type}_{threshold}')
     os.makedirs(base_dir, exist_ok=True)
 
     if filtered_list is None:
@@ -144,12 +144,6 @@ def download_images_by_tags(
 
     retry_list = []
     fail_list = []
-
-    # 이미지 필터 모듈 초기화
-    image_filter = ImageFilter(
-        sample_image_path=zip_path,
-        threshold=threshold,
-    )
 
     image_sources = []
 
@@ -195,10 +189,17 @@ def download_images_by_tags(
                     logs.log_data(f'Unexpect Request Error: {e}')
                     retry_list.append(record)
 
+    # 이미지 필터 모듈 초기화
+    image_filter = ImageFilter(
+        sample_image_path=zip_path,
+        threshold=threshold,
+        model_type=model_type
+    )
+
     filtered_image_source = image_filter.combined_filtering('byte', image_sources)
 
     for file_name, image_source in filtered_image_source:
-        with open(os.path.join(base_dir, file_name), 'wb') as f:
+        with open(os.path.join(f'{base_dir}', file_name), 'wb') as f:
             filtered_list.append(file_name)
             f.write(image_source)
 
@@ -222,7 +223,8 @@ def download_images_by_tags(
             logs.log_data(f"Max retries exceeded for record {fail_list}", "error")
     else:
         # 추후 callback 사용 시
-        logs.log_data(f'--- Tags: {tags} 다운로드 종료')
+        logs.log_data(f'--- Tags: {model_type} {tags} 다운로드 종료')
+        os.remove(zip_path)  # 샘플이미지 삭제
         return {
             'filtered_list': filtered_list
         }

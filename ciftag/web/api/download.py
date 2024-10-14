@@ -35,9 +35,16 @@ async def download_image_url_by_tags(
     target_size: Optional[tuple[int, int]] = Query(
         default=None, title="타겟 이미지 사이즈", description="타겟 이미지 사이즈(weight, height)도 제공 샘플 이미지로부터 오차 10% 내외 권장"
     ),
-    threshold: float = Query(default=0.8, title="쓰레쉬 홀드", description='목표 정확도 0~1'),
+    threshold: float = Query(default=0.9, title="쓰레쉬 홀드", description='목표 정확도 0~1'),
+    model_type: str = Query(default='FaceNet', title="사용할 모델", description='ResNet50, FaceNet, SwinTransformer'),
 ):
-    """태그 기반 다운로드. tag + cnn 기반 이미지 필터링 적용"""
+    """태그 기반 다운로드.<br><br>
+
+    여러 cnn기반 이미지 필터링 적용\n
+    ResNet50: 성능이 좋지 않음\n
+    FaceNet: threshold 0.9 이상\n
+    SwinTransformer: threshold 0.65~0.7 이상
+    """
     if not sample_zip.filename.endswith(".zip"):
         raise CiftagAPIException(message="Only zip files are allowed.", status_code=400)
 
@@ -45,7 +52,18 @@ async def download_image_url_by_tags(
     try:
         tmp_dir = f"{conf.get("dir", "data_home")}/Temp"
         os.makedirs(tmp_dir, exist_ok=True)
-        zip_path = os.path.join(tmp_dir, sample_zip.filename)
+
+        base_filename, file_extension = os.path.splitext(sample_zip.filename)
+        tmp_filename = f"{base_filename}_{model_type}{file_extension}"
+
+        zip_path = os.path.join(tmp_dir, tmp_filename)
+
+        counter = 1
+        # 샘플 파일 중복 방지
+        while os.path.exists(zip_path):
+            tmp_filename = f"{base_filename}_{model_type}_{counter}{file_extension}"
+            zip_path = os.path.join(tmp_dir, tmp_filename)
+            counter += 1
 
         with open(zip_path, "wb") as f:
             f.write(await sample_zip.read())
@@ -53,4 +71,4 @@ async def download_image_url_by_tags(
     except zipfile.BadZipFile:
         raise CiftagAPIException(message="Invalid zip file.", status_code=400)
 
-    return download_image_by_tags_service(tags, zip_path, target_size, threshold)
+    return download_image_by_tags_service(tags, zip_path, target_size, threshold, model_type)

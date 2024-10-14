@@ -52,7 +52,7 @@ def search(logs, task_id, page, redis_name, tag, goal_cnt, min_width=None, max_w
             return pinData;
         }''')
 
-        logs.log_data(f'서치된 핀 갯수: {len(new_pins)}', )
+        logs.log_data(f'서치된 핀 갯수: {len(new_pins)}, 수집한 핀 갯수: {len(pins)}')
 
         for title, thumbnail_url, link in new_pins:
             if len(pins) >= goal_cnt:
