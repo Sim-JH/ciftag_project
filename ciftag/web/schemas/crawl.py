@@ -21,7 +21,7 @@ class CrawlBase(BaseModel):
                     + ", ".join([f"{e.name}: {e.value}" for e in enums.RunOnCode])
     )
     tags: list = Field(None, title="검색 할 태그 목록")
-    cnt: int = Field(1, gt=0, lt=100, title="크롤링 할 이미지 갯수", description="최대 100개까지")
+    cnt: int = Field(1, gt=0, lt=1001, title="크롤링 할 이미지 갯수", description="최대 3000개까지")
 
 
 class CrawlRequestBase(CrawlBase):

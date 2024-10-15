@@ -1,4 +1,5 @@
-from typing import List, Union
+from datetime import datetime
+from typing import List, Optional
 
 
 from ciftag.exceptions import CiftagAPIException
@@ -11,20 +12,52 @@ from ciftag.web.crud.core import (
 from ciftag.orchestrator.crawl import CrawlTriggerDispatcher
 
 
-async def get_crawl_info_with_service(
+async def get_crawl_req_service(
     crawl_pk: int,
-    user_pk: Union[int, None],
-    target_code: Union[str, None],
-    result_code: Union[str, None],
-    run_on: Union[int, None],
-    tags: List[str],
+    user_pk: Optional[int],
+    target_code: Optional[str],
+    run_on: Optional[int],
+    start_time: Optional[datetime],
+    end_time: Optional[datetime],
+    tags: List[str]
 ):
-    pass
+    dbm = DBManager()
+
+    with dbm.create_session() as session:
+        query = session.query(
+            CrawlRequestInfo
+        )
+
+        if crawl_pk:
+            query = query.filter(CrawlRequestInfo.id == crawl_pk)
+
+        if user_pk:
+            query = query.filter(CrawlRequestInfo.user_pk == user_pk)
+
+        if target_code:
+            query = query.filter(CrawlRequestInfo.target_code == target_code)
+
+        if run_on:
+            query = query.filter(CrawlRequestInfo.run_on == run_on)
+
+        if start_time:
+            query = query.filter(CrawlRequestInfo.created_at >= start_time)
+
+        if end_time:
+            query = query.filter(CrawlRequestInfo.created_at <= end_time)
+
+        if len(tags) > 0:
+            query = query.filter(
+                CrawlRequestInfo.tags.op('~')('|'.join(tags))  # 정규식 기반 검색
+            )
+
+        records = query.order_by(CrawlRequestInfo.id).all()
+
+    return records
 
 
-async def add_crawl_info_with_trigger(request):
+async def add_crawl_info_with_trigger(data):
     # 태그 처리
-    data = request.dict()
     tag_list = data['tags']
 
     # 단일 태그만 허용하는 사이트

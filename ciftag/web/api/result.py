@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, Body
 from fastapi.responses import FileResponse
@@ -28,10 +28,10 @@ async def get_target_crawl_info(
 async def get_result_img(
     target_code: str = Path(title="대상 사이트 코드", description='0 입력시 전체 조회'),
     user_pk: int = Path(title="사용자 id", description="0 입력 시 전체 조회"),
-    min_height: Union[str, None] = Query(default=None, title="조회할 이미지 최소 높이"),
-    max_height: Union[str, None] = Query(default=None, title="조회할 이미지 최대 높이"),
-    min_width: Union[str, None] = Query(default=None, title="조회할 이미지 최소 너비"),
-    max_width: Union[str, None] = Query(default=None, title="조회할 이미지 최대 너비"),
+    min_height: Optional[str] = Query(default=None, title="조회할 이미지 최소 높이"),
+    max_height: Optional[str] = Query(default=None, title="조회할 이미지 최대 높이"),
+    min_width: Optional[str] = Query(default=None, title="조회할 이미지 최소 너비"),
+    max_width: Optional[str] = Query(default=None, title="조회할 이미지 최대 너비"),
 ):
     """타겟별 수집 목록 조회"""
     return await get_target_crawl_data_service(

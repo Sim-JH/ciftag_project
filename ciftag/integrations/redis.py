@@ -49,3 +49,15 @@ class RedisManager:
         else:
             self.redis.delete(name)
 
+    def increase_key(self, name):
+        """key의 value 증가 후 반환"""
+        return self.redis.incr(name)
+
+    def set_expire(self, name, limit_cnt):
+        """key의 제한시간 설정"""
+        self.redis.expire(name, limit_cnt)
+
+    def get_ttl(self, name):
+        """key의 만료시간 조회"""
+        return self.redis.ttl(name)
+
