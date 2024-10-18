@@ -13,7 +13,8 @@ from ciftag.models import (
     TumblrCrawlData,
     FlickrCrawlInfo,
     FlickrCrawlData,
-    CrawlRequestInfo
+    CrawlRequestInfo,
+    enums
 )
 
 
@@ -75,12 +76,27 @@ def download_image_from_url_service(target_code: str, request):
 def download_image_by_tags_service(
         tags: List[str], zip_path: str, target_size, threshold: float, model_type: str
 ):
+    def apply_size_filter(_query, _data_model, _target_size):
+        return _query.filter(
+            between(
+                _data_model.width,
+                _target_size[0] * 0.9,
+                _target_size[0] * 1.1
+            ),
+            between(
+                _data_model.height,
+                _target_size[1] * 0.9,
+                _target_size[1] * 1.1
+            )
+        )
+
     dbm = DBManager()
 
     # tag + url 가져오기
     with dbm.create_session() as session:
         pint = session.query(
             CrawlRequestInfo.id.label('crawl_id'),
+            CrawlRequestInfo.target_code.label('target_code'),
             PinterestCrawlInfo.id.label('info_id'),
             PinterestCrawlData.id.label('data_id'),
             PinterestCrawlData.image_url,
@@ -95,6 +111,7 @@ def download_image_by_tags_service(
 
         thumb = session.query(
             CrawlRequestInfo.id.label('crawl_id'),
+            CrawlRequestInfo.target_code.label('target_code'),
             TumblrCrawlInfo.id.label('info_id'),
             TumblrCrawlData.id.label('data_id'),
             TumblrCrawlData.image_url,
@@ -109,6 +126,7 @@ def download_image_by_tags_service(
 
         flk = session.query(
             CrawlRequestInfo.id.label('crawl_id'),
+            CrawlRequestInfo.target_code.label('target_code'),
             FlickrCrawlInfo.id.label('info_id'),
             FlickrCrawlData.id.label('data_id'),
             FlickrCrawlData.image_url,
@@ -128,54 +146,24 @@ def download_image_by_tags_service(
         # )
 
         if target_size:
-            pint.filter(
-                between(
-                    PinterestCrawlData.width,
-                    target_size[0] * 0.9,
-                    target_size[0] * 1.1
-                ),
-                # height가 target_size[1]의 ±10% 내외인지 확인
-                between(
-                    PinterestCrawlData.height,
-                    target_size[1] * 0.9,
-                    target_size[1] * 1.1
-                ),
-            )
-
-            thumb.filter(
-                between(
-                    TumblrCrawlData.width,
-                    target_size[0] * 0.9,
-                    target_size[0] * 1.1
-                ),
-                # height가 target_size[1]의 ±10% 내외인지 확인
-                between(
-                    TumblrCrawlData.height,
-                    target_size[1] * 0.9,
-                    target_size[1] * 1.1
-                ),
-            )
-
-            flk.filter(
-                between(
-                    FlickrCrawlData.width,
-                    target_size[0] * 0.9,
-                    target_size[0] * 1.1
-                ),
-                # height가 target_size[1]의 ±10% 내외인지 확인
-                between(
-                    FlickrCrawlData.height,
-                    target_size[1] * 0.9,
-                    target_size[1] * 1.1
-                ),
-            )
+            pint = apply_size_filter(pint, PinterestCrawlData, target_size)
+            thumb = apply_size_filter(thumb, TumblrCrawlData, target_size)
+            flk = apply_size_filter(flk, FlickrCrawlData, target_size)
 
         # query = union(pint, thumb, flk).limit(100)
         query = union(pint, thumb, flk)
         records = session.execute(query).fetchall()
 
     # orm -> dict
-    records = [dict(record._mapping) for record in records]
+    serialized_records = []
+
+    for record in records:
+        record_dict = dict(record._mapping)
+        # enums 필드 처리
+        if isinstance(record_dict.get('target_code'), enums.CrawlTargetCode):
+            record_dict['target_code'] = record_dict['target_code'].name
+
+        serialized_records.append(record_dict)
 
     # celery run
     download_img_tag_s = app.signature(
@@ -183,7 +171,7 @@ def download_image_by_tags_service(
         kwargs={
             'tags': "/".join(tags),
             'zip_path': zip_path,
-            'records': records,
+            'records': serialized_records,
             'threshold': threshold,
             'model_type': model_type,
         }

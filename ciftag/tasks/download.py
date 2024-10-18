@@ -1,4 +1,5 @@
 import os
+from tqdm import tqdm
 from datetime import datetime
 import requests
 
@@ -9,6 +10,7 @@ from ciftag.integrations.request_session import make_requests
 from ciftag.celery_app import app
 from ciftag.ml.filter import ImageFilter
 from ciftag.web.crud.core import update_orm, increment_orm
+from ciftag.web.crud.common import upsert_img_match
 from ciftag.models import (
     PinterestCrawlInfo,
     PinterestCrawlData,
@@ -147,13 +149,14 @@ def download_images_by_tags(
 
     image_sources = []
 
-    for idx, record in enumerate(records):
+    logs.log_data(f'--- Tags: {model_type} {tags} 이미지 캐시 다운로드')
+    for idx, record in tqdm(enumerate(records)):
         # 이미지 URL에서 파일 확장자 추출할 경우
         tag = tags.replace('/', '_')
-        crawl_idx, info_idx, data_idx, image_url = record.values()
+        crawl_idx, target_code, info_idx, data_idx, image_url = record.values()
 
         # 이미지 파일명 생성
-        filename = f"{tag}_{crawl_idx}_{info_idx}_{data_idx}.{ext}"
+        filename = f"{tag}_{target_code}_{crawl_idx}_{info_idx}_{data_idx}.{ext}"
 
         # 이미지 Get
         try:
@@ -196,12 +199,22 @@ def download_images_by_tags(
         model_type=model_type
     )
 
+    logs.log_data(f'--- Tags: {model_type} {tags} 이미지 필터링 실행')
     filtered_image_source = image_filter.combined_filtering('byte', image_sources)
 
+    # 이미지 쓰기 + 매칭 테이블 갱신
     for file_name, image_source in filtered_image_source:
         with open(os.path.join(f'{base_dir}', file_name), 'wb') as f:
             filtered_list.append(file_name)
             f.write(image_source)
+
+        _name = file_name.rsplit('.', 1)[0].split('_')
+
+        upsert_img_match(
+            data_id=int(_name[-1]),
+            target_code=_name[1],
+            filter_dict={model_type: float(threshold)}
+        )
 
     logs.log_data(f'--- Tags: {tags} {self.request.retries+1}회 {len(filtered_list)}개 필터링 완료 후 다운로드')
 
