@@ -4,6 +4,10 @@ import cv2
 import numpy as np
 from mtcnn import MTCNN
 
+import ciftag.utils.logger as logger
+
+logs = logger.Logger('ML')
+
 
 class FaceCropper:
     """얼굴 중앙 탐지 후 정사각형으로 crop"""

@@ -145,15 +145,16 @@ class ImageFilter:
             mode: str,
             image_source_with_file_name: List[Tuple[str, Union[bytes, str]]]
     ):
-        """필수: 태그 기반 필터링 + 선택: 유사도 기반 필터링
+        """ 이미지 필터링 실행
         image_source_with_file_name: 리스트 [{파일명: 이미지 소스}]
-        mode: image_sources 제공 형식 List[(byte/path)]
+        mode: image_sources 제공 형식 byte/path
         """
         if mode not in ['byte', 'path']:
             raise ValueError("mode는 'byte' 또는 'path' 중 택일")
 
         logs.log_data(f"{self.model_type} 전달된 이미지 수: {len(image_source_with_file_name)}")
         # 유사도 기반 필터링
-        final_filtered_images = self.filter_by_similarity(mode, image_source_with_file_name)
-        logs.log_data(f"{self.model_type} {self.threshold} 유사도 기반 필터링을 통과한 이미지 수: {len(final_filtered_images)}")
-        return final_filtered_images
+        filtered_images = self.filter_by_similarity(mode, image_source_with_file_name)
+        logs.log_data(f"{self.model_type} {self.threshold} 유사도 기반 필터링을 통과한 이미지 수: {len(filtered_images)}")
+
+        return filtered_images
