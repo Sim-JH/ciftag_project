@@ -29,6 +29,11 @@ class EnvKeys:
         self.DB_PASSWORD: str = os.getenv("DB_PASSWORD", None)
         # endregion
 
+        # elasticsearch 관련
+        self.ES_HOST: str = os.getenv("ES_HOST", 'localhost')
+        self.ES_PORT: int = int(os.getenv("ES_PORT", 9200))
+        self.ES_SCHEME: str = os.getenv("ES_SCHEME", "http")
+
         # git action 관련
         self.GIT_TOKEN: str = os.getenv("GIT_TOKEN", None)
         self.GIT_OWNER: str = os.getenv("GIT_OWNER", None)
