@@ -43,8 +43,8 @@ def download_image_from_url_service(target_code: str, request):
     dbm = DBManager()
 
     # tag + url 가져오기
-    with dbm.create_session() as session:
-        records = session.query(
+    with (dbm.create_session() as session):
+        query = session.query(
             info_model.id.label("info_id"),
             info_model.tags,
             data_model.id.label("data_id"),
@@ -52,9 +52,15 @@ def download_image_from_url_service(target_code: str, request):
             data_model.image_url,
         ).join(
             data_model, info_model.id == join_key
-        ).filter(
-            data_model.id.in_(data_pk_list)
-        ).order_by(data_model.id).all()
+        )
+
+        if len(data_pk_list):
+            query = query.filter(
+                data_model.id.in_(data_pk_list)
+            )
+
+        # records = query.order_by(data_model.id).limit(100).all()
+        records = query.order_by(data_model.id).all()
 
     # orm -> dict
     records = [dict(record._mapping) for record in records]

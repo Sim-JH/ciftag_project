@@ -7,9 +7,11 @@ import ciftag.utils.logger as logger
 
 from ciftag.configuration import conf
 from ciftag.integrations.request_session import make_requests
+from ciftag.integrations.elastic import ESManager
 from ciftag.celery_app import app
 from ciftag.ml.filter import ImageFilter
-from ciftag.web.crud.core import update_orm, increment_orm
+from ciftag.ml.gen_dec import ImageDescriber
+from ciftag.web.crud.core import insert_orm, update_orm, increment_orm
 from ciftag.web.crud.common import upsert_img_match
 from ciftag.models import (
     PinterestCrawlInfo,
@@ -17,7 +19,9 @@ from ciftag.models import (
     TumblrCrawlInfo,
     TumblrCrawlData,
     FlickrCrawlInfo,
-    FlickrCrawlData
+    FlickrCrawlData,
+    ImageTagMeta,
+    enums
 )
 
 logs = logger.Logger(log_dir='Download')
@@ -26,8 +30,9 @@ logs = logger.Logger(log_dir='Download')
 # TODO DB 로깅 추가
 @app.task(bind=True, name="ciftag.task.download_images_by_target", max_retries=3)
 def download_images_by_target(self, target, records, success_list=None, api_proxies=None, ext='png'):
-    """requests 기반 타겟별 이미지 다운로드. 재시도 최대 3회"""
-    # TODO 필터링 프리셋
+    """requests 기반 타겟별 이미지 다운로드. 재시도 최대 3회
+    다운로드를 먼저 수행한 이후 해당 파일들에 대한 메타 업데이트
+    """
     logs.log_data(f'--- Target: {target} {self.request.retries+1}회 다운로드 시작. 총 목표 갯수: {len(records)}')
 
     # 이미지를 저장할 디렉토리
@@ -50,10 +55,13 @@ def download_images_by_target(self, target, records, success_list=None, api_prox
         info_model = FlickrCrawlInfo
         data_model = FlickrCrawlData
 
+    target_code = enums.CrawlTargetCode[target.lower()].name
+    logs.log_data(f'--- Tags: {target} 이미지 캐시 다운로드')
+
     for record in records:
         # 이미지 URL에서 파일 확장자 추출할 경우
         info_idx, tags, data_idx, title, image_url = record.values()
-        tag = "_".join(tags)  # TODO tag 여러 개일때의 디렉토리 구조 구조
+        tag = tags.replace(',', '_')
 
         # 타이틀은 10자까지만
         title = title[:10].rstrip() if len(title) > 10 else title
@@ -73,17 +81,19 @@ def download_images_by_target(self, target, records, success_list=None, api_prox
                 headers=None
             )
 
-            if response.status_code == 200:
+            status_code = response.status_code
+
+            if status_code == 200:
                 with open(img_path, 'wb') as f:
                     f.write(response.content)
 
-                success_list.append(data_idx)
                 update_orm(
                     data_model, 'id', data_idx, {
                         'download': True, 'img_path': img_path, 'size': os.path.getsize(img_path)
                     }
                 )
                 increment_orm(info_model, 'id', info_idx, 'downloads')
+                success_list.append((data_idx, img_path, tags))
             else:
                 logs.log_data(
                     f'response error: {response.status_code} - {response.reason}: {response.text}',
@@ -105,6 +115,38 @@ def download_images_by_target(self, target, records, success_list=None, api_prox
                 else:
                     logs.log_data(f'Unexpect Request Error: {e}')
                     retry_list.append(record)
+
+    image_describer = ImageDescriber(
+        model_type='BLIP',
+        translate=True
+    )
+
+    logs.log_data(f'--- Tags: {target} 이미지 메타 생성')
+    img_decs = image_describer.process_image(
+        success_list,
+        'path'
+    )
+
+    # 이미지 메타 쓰기 & 엘리스틱 서치 색인 (TODO: 추후 API단에서 CRUD 데이터 동기화 이뤄져야함)
+    es_m = ESManager()
+    for data_idx, description in img_decs:
+        body = {
+            "data_pk": data_idx,
+            "target_code": target_code,
+            "description": description
+        }
+
+        tag_meta_id = insert_orm(
+            ImageTagMeta,
+            body,
+            True
+        )
+
+        es_m.index_to_es(
+            'image_tag_meta',
+            tag_meta_id,
+            body,
+        )
     
     logs.log_data(f'--- Target: {target} {self.request.retries+1}회 {len(success_list)}개 다운로드')
     
@@ -134,7 +176,9 @@ def download_images_by_target(self, target, records, success_list=None, api_prox
 def download_images_by_tags(
         self, tags, zip_path, records, threshold, model_type, filtered_list=None, api_proxies=None, ext='png'
 ):
-    """requests 기반 태그별 이미지 다운로드. 필터 적용 가능. 재시도 최대 3회"""
+    """requests 기반 태그별 이미지 다운로드. 필터 적용 가능. 재시도 최대 3회
+    필터링이 완료된 이미지를 대상으로 다운로드
+    """
     logs.log_data(f'--- Tags: {model_type} {tags} {self.request.retries+1}회 다운로드. 시작 총 목표 갯수: {len(records)}')
 
     # 이미지를 저장할 디렉토리

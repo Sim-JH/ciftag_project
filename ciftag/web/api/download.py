@@ -21,8 +21,7 @@ def download_image_url(
     request: DownloadRequestBase,
     target_code: str = Path(title="대상 사이트 코드"),
 ):
-    """data id로부터 이미지 download"""
-    # TODO 정기 다운로드의 경우 DB에 태그별 다운로드 프리셋을 지정해 해당 방식대로 다운로드
+    """data id로부터 이미지 download 및 메타 업데이트"""
     return download_image_from_url_service(target_code, request)
 
 
