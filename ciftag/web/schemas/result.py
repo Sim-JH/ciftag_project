@@ -1,6 +1,7 @@
 from datetime import time
 from typing import Optional
-from pydantic import Field
+
+from pydantic import Field, BaseModel
 
 from ciftag.models import enums
 from ciftag.web.schemas.common import ImgDataBase
@@ -32,3 +33,15 @@ class CrawlDataResponse(ImgDataBase):
                     + ", ".join([f"{e.name}: {e.value}" for e in enums.RunOnCode])
     )
     tags: str = Field(None, title="태그 목록")
+
+
+class TagMetaResponse(BaseModel):
+    id: int = Field(None, title="인덱스")
+    data_pk: int = Field(None, gt=0, title="데이터 인덱스")
+    target_code: enums.CrawlTargetCode = Field(
+        "1",
+        title="크롤링 대상 사이트 코드",
+        description="크롤링 대상 사이트 코드의 값은 다음과 같습니다: "
+                    + ", ".join([f"{e.name}: {e.value}" for e in enums.CrawlTargetCode])
+    )
+    description: str = Field(None, title="이미지 설명")

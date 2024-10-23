@@ -1,5 +1,7 @@
 from ciftag.exceptions import CiftagAPIException
 from ciftag.integrations.database import DBManager
+from ciftag.integrations.elastic import ESManager
+from ciftag.web.schemas.result import TagMetaResponse
 from ciftag.models import (
     CrawlRequestInfo,
     PinterestCrawlInfo,
@@ -7,17 +9,9 @@ from ciftag.models import (
     TumblrCrawlInfo,
     TumblrCrawlData,
     FlickrCrawlInfo,
-    FlickrCrawlData
+    FlickrCrawlData,
+    enums
 )
-from ciftag.web.crud.core import (
-    select_orm,
-    search_orm,
-    insert_orm,
-    update_orm,
-    delete_orm
-)
-
-from sqlalchemy import union_all, text
 
 
 async def get_target_crawl_info_service(target_code: str, user_pk: int):
@@ -126,3 +120,26 @@ async def get_target_crawl_data_service(
         records = query.all()
 
     return records
+
+
+async def get_result_img_by_dec_service(description: str):
+    es_m = ESManager()
+    body = {
+        "query": {
+            "match": {
+                "description": description
+            }
+        }
+    }
+
+    records = es_m.search_es_index(index_name="image_tag_meta", body=body)
+    
+    return [
+        TagMetaResponse(
+            id=record['id'],
+            data_pk=record['data_pk'],
+            target_code=enums.CrawlTargetCode[record['target_code']],
+            description=record['description']
+        )
+        for record in records
+    ]

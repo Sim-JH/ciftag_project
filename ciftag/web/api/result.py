@@ -1,15 +1,16 @@
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, Body
-from fastapi.responses import FileResponse
 
 from ciftag.web.schemas.result import (
     CrawlInfoResponse,
-    CrawlDataResponse
+    CrawlDataResponse,
+    TagMetaResponse
 )
 from ciftag.web.crud.result import (
     get_target_crawl_info_service,
-    get_target_crawl_data_service
+    get_target_crawl_data_service,
+    get_result_img_by_dec_service
 )
 
 router = APIRouter()
@@ -43,3 +44,10 @@ async def get_result_img(
         max_width
     )
 
+
+@router.get("/dec", response_model=List[TagMetaResponse])
+async def get_result_img_by_dec(
+    description: str = Query(..., title="검색 문장", description='elastic search 기반 검색'),
+):
+    """문장 기반 이미지 검색"""
+    return await get_result_img_by_dec_service(description)
