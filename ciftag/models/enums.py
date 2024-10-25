@@ -61,6 +61,12 @@ class WorkStatusCode(Enum):
     canceled = "401"  # 작업 취소
 
 
+class WorkTypeCode(Enum):
+    """작업 구분 코드"""
+    crawl = "1"  # 크롤링
+    download = "2"  # 다운로드
+
+
 class TaskStatusCode(Enum):
     """내부 작업 상태 코드"""
     # 작업 실행 관련

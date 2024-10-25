@@ -16,6 +16,7 @@ class WorkInfo(Base):
 
     id = Column(Integer, primary_key=True)
     work_sta = Column(Enum(enums.WorkStatusCode))  # 외부 작업 상태
+    work_type = Column(Enum(enums.WorkTypeCode), default=enums.WorkTypeCode['crawl'])  # 작업 구분 코드
     msg = Column(String, default=None)  # 에러 메시지
     traceback = Column(Text, default=None)  # 추적 로그
     start_dt = Column(DateTime(timezone=True), default=lambda: datetime.now(TIMEZONE))  # 시작 시간
@@ -33,6 +34,7 @@ class WorkInfoHistory(Base):
         ForeignKey("work_info.id")
     )  # 사용자 정보 ID (FK)
     work_sta = Column(Enum(enums.WorkStatusCode))  # 외부 작업 상태
+    work_type = Column(Enum(enums.WorkTypeCode), default=enums.WorkTypeCode['crawl'])  # 작업 구분 코드
     msg = Column(String, default=None)  # 에러 메시지
     traceback = Column(Text, default=None)  # 추적 로그
     start_dt = Column(DateTime(timezone=True), default=lambda: datetime.now(TIMEZONE))  # 시작 시간

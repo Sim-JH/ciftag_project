@@ -1,11 +1,12 @@
-import zipfile
-from typing import List, Optional
+import os
+import cv2
+from ciftag.configuration import conf
+from ciftag.ml.detect_face import FaceCropper
 
 from sqlalchemy import union, between
 
 from ciftag.exceptions import CiftagAPIException
 from ciftag.integrations.database import DBManager
-from ciftag.celery_app import app
 from ciftag.utils.apis import provide_to_zipfile
 from ciftag.models import (
     PinterestCrawlInfo,
@@ -18,7 +19,6 @@ from ciftag.models import (
 
 
 def provide_face_crop_image_service(target_code: str, start_idx: int, end_idx: int, resize: int):
-    # TODO 타겟 코드별 모델 지정 통합
     if target_code == "1":
         info_model = PinterestCrawlInfo
         data_model = PinterestCrawlData
@@ -60,13 +60,6 @@ def provide_face_crop_image_service(target_code: str, start_idx: int, end_idx: i
 
     # orm -> dict
     records = [dict(record._mapping) for record in records]
-    print(records)
-
-    # TODO celery 구동으로 변경
-    import os
-    import cv2
-    from ciftag.configuration import conf
-    from ciftag.ml.detect_face import FaceCropper
 
     face_cropper = FaceCropper()
     crop_file_list = []

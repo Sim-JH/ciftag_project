@@ -13,6 +13,7 @@ from ciftag.ml.filter import ImageFilter
 from ciftag.ml.gen_dec import ImageDescriber
 from ciftag.web.crud.core import insert_orm, update_orm, increment_orm
 from ciftag.web.crud.common import upsert_img_match
+from ciftag.web.crud.common import insert_work_status, update_work_status
 from ciftag.models import (
     PinterestCrawlInfo,
     PinterestCrawlData,
@@ -34,6 +35,7 @@ def download_images_by_target(self, target, records, success_list=None, api_prox
     다운로드를 먼저 수행한 이후 해당 파일들에 대한 메타 업데이트
     """
     logs.log_data(f'--- Target: {target} {self.request.retries+1}회 다운로드 시작. 총 목표 갯수: {len(records)}')
+    work_id = insert_work_status({'work_sta': enums.WorkStatusCode.trigger, 'work_type': enums.WorkTypeCode.download})
 
     # 이미지를 저장할 디렉토리
     base_dir = os.path.join(f'{conf.get('dir', 'img_dir')}/Target', target)
@@ -116,6 +118,8 @@ def download_images_by_target(self, target, records, success_list=None, api_prox
                     logs.log_data(f'Unexpect Request Error: {e}')
                     retry_list.append(record)
 
+    update_work_status(work_id, {'work_sta': enums.WorkStatusCode.download})
+
     image_describer = ImageDescriber(
         model_type='BLIP',
         translate=True
@@ -147,8 +151,9 @@ def download_images_by_target(self, target, records, success_list=None, api_prox
             tag_meta_id,
             body,
         )
-    
+
     logs.log_data(f'--- Target: {target} {self.request.retries+1}회 {len(success_list)}개 다운로드')
+    update_work_status(work_id, {'work_sta': enums.WorkStatusCode.success})
     
     if len(retry_list) > 0:
         try:
@@ -164,6 +169,7 @@ def download_images_by_target(self, target, records, success_list=None, api_prox
             )  # 차단 시 재시도
         except self.MaxRetriesExceededError:
             logs.log_data(f"Max retries exceeded for record {fail_list}", "error")
+            update_work_status(work_id, {'work_sta': enums.WorkStatusCode.failed})
     else:
         # 추후 callback 사용 시
         logs.log_data(f'--- Target: {target} 다운로드 종료')
@@ -180,6 +186,7 @@ def download_images_by_tags(
     필터링이 완료된 이미지를 대상으로 다운로드
     """
     logs.log_data(f'--- Tags: {model_type} {tags} {self.request.retries+1}회 다운로드. 시작 총 목표 갯수: {len(records)}')
+    work_id = insert_work_status({'work_sta': enums.WorkStatusCode.trigger, 'work_type': enums.WorkTypeCode.download})
 
     # 이미지를 저장할 디렉토리
     base_dir = os.path.join(f'{conf.get('dir', 'img_dir')}/Tags', f'{tags.replace('/', '_')}/{model_type}_{threshold}')
@@ -261,6 +268,7 @@ def download_images_by_tags(
         )
 
     logs.log_data(f'--- Tags: {tags} {self.request.retries+1}회 {len(filtered_list)}개 필터링 완료 후 다운로드')
+    update_work_status(work_id, {'work_sta': enums.WorkStatusCode.success})
 
     if len(retry_list) > 0:
         try:
@@ -278,6 +286,7 @@ def download_images_by_tags(
             )  # 차단 시 재시도
         except self.MaxRetriesExceededError:
             logs.log_data(f"Max retries exceeded for record {fail_list}", "error")
+            update_work_status(work_id, {'work_sta': enums.WorkStatusCode.failed})
     else:
         # 추후 callback 사용 시
         logs.log_data(f'--- Tags: {model_type} {tags} 다운로드 종료')

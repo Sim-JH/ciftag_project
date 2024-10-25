@@ -37,29 +37,29 @@ def exit_handler():
 
         # TODO airflow 상위 task dag 구현 이후 동적 호출 방법 수정
         for target, get_cnt, elapsed_time in task_result:
-            if target == "pinterest":
-                airflow_param = {
-                    'work_id': _work_id,
-                    'hits': get_cnt,
-                    'elapsed_time': elapsed_time,
-                }
+            airflow_param = {
+                'work_id': _work_id,
+                'hits': get_cnt,
+                'target': target,
+                'elapsed_time': elapsed_time,
+            }
 
-                try:
-                    url = f"http://{env_key.AIRFLOW_URI}:{env_key.AIRFLOW_PORT}/api/v1/dags/run-after-pinterest/dagRuns"
-                    headers = {
-                        "content-type": "application/json",
-                        "Accept": "application/json",
-                    }
-                    response = requests.post(
-                        url,
-                        json={"conf": airflow_param},
-                        headers=headers,
-                        auth=(env_key.AIRFLOW_USERNAME, env_key.AIRFLOW_PASSWORD),
-                        verify=False  # crt 인증서 airflow 적용 시 수정 & https
-                    )
-                    logs.log_data(f"--- Exit dag Success: {response.status_code}")
-                except Exception as e:
-                    logs.log_data(f"--- Exit dag Fail: {e}")
+            try:
+                url = f"http://{env_key.AIRFLOW_URI}:{env_key.AIRFLOW_PORT}/api/v1/dags/rrun-after-crawl/dagRuns"
+                headers = {
+                    "content-type": "application/json",
+                    "Accept": "application/json",
+                }
+                response = requests.post(
+                    url,
+                    json={"conf": airflow_param},
+                    headers=headers,
+                    auth=(env_key.AIRFLOW_USERNAME, env_key.AIRFLOW_PASSWORD),
+                    verify=False  # crt 인증서 airflow 적용 시 수정 & https
+                )
+                logs.log_data(f"--- Exit dag Success: {response.status_code}")
+            except Exception as e:
+                logs.log_data(f"--- Exit dag Fail: {e}")
 
 
 _work_id = 0
@@ -159,6 +159,10 @@ def runner(run_type: str, container_work_id: int):
                         content['data'],
                         REDIS_NAME
                     )
+                # TODO
+                # elif run_type == "tumblr":
+                # elif run_type == "flicker":
+
 
                 # 실패 시 큐 재삽입
                 if not result['result'] and result["message"]:

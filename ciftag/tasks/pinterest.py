@@ -17,6 +17,7 @@ from ciftag.integrations.redis import RedisManager
 from ciftag.scripts.common import insert_task_status, update_task_status
 from ciftag.services.pinterest import PAGETYPE
 from ciftag.services.pinterest.run import run
+from ciftag.web.crud.common import update_work_status
 
 logs = logger.Logger(log_dir='Celery')
 
@@ -105,8 +106,6 @@ def run_pinterest(
 
 @app.task(bind=True, name="ciftag.task.pinterest_after", max_retries=0)
 def after_pinterest(self, results: List[Dict[str, Any]], work_id: int, info_id: int, redis_name: str):
-    from ciftag.models import enums
-    from ciftag.web.crud.common import update_work_status
     logs.log_data(f"--- Run {PAGETYPE} Post proc: {work_id}")
 
     # 외부 작업 로그 update
