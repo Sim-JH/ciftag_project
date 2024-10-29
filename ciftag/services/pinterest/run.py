@@ -42,7 +42,7 @@ def run(
     :param runner_identify: 처리기 식별자
     :param goal_cnt: 목표 수량
     :param data: 메타 데이터
-    :param redis_name:  redis set name
+    :param redis_name: redis set name
     :param headless: 헤드리스 모드 여부
     """
     time.sleep(random.randrange(1, 10))

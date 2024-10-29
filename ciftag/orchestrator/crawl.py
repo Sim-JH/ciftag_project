@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Tuple, Union
 import requests
 from celery import chain, group
 
+import ciftag.utils.logger as logger
 from ciftag.settings import SERVER_TYPE, env_key
 from ciftag.exceptions import CiftagAPIException
 from ciftag.celery_app import app
@@ -12,6 +13,8 @@ from ciftag.models import PinterestCrawlInfo, TumblrCrawlInfo, FlickrCrawlInfo, 
 from ciftag.integrations.sqs import SqsManger
 from ciftag.web.crud.core import insert_orm
 from ciftag.web.crud.common import insert_work_status, update_work_status
+
+logs = logger.Logger(log_dir='Dispatcher')
 
 
 class CrawlTriggerDispatcher:
@@ -99,6 +102,7 @@ class CrawlTriggerDispatcher:
             'inputs': {
                 'server_type': SERVER_TYPE,
                 'run_type': f'{self.target_code.name}',
+                'work_id': str(task_body['work_id']),
                 'crypto_key': self.crypto.base64_covert(self.crypto_key, 'encode')
             }
         }
@@ -108,6 +112,7 @@ class CrawlTriggerDispatcher:
         # action 트리거 실패시 purge
         if response.status_code != 204:
             sqs_queue.purge_queue()
+            logs.log_data(f'Error on Trigger Github Action: {response.text}')
             raise CiftagAPIException('Fail To Trigger Github Action', 400)
 
     def _trigger_services(self, model, work_id, crawl_pk):

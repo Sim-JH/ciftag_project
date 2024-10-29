@@ -24,6 +24,8 @@ def generate_info_update_sql_task(**kwargs):
         target_table = "pint_crawl_info"
     elif target == "tumblr":
         target_table = "tumb_crawl_info"
+    elif target == "flicker":
+        target_table = "flicker_crawl_info"
 
     # SQL 쿼리 생성
     query = f"""UPDATE {target_table} SET hits='{hits}', elapsed_time='{timedelta(seconds=elapsed_time)}' WHERE id='{info_id}';"""

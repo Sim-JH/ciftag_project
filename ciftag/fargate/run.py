@@ -12,6 +12,8 @@ from subprocess import check_output
 
 import ciftag.utils.logger as logger
 import ciftag.services.pinterest.run as pinterest
+import ciftag.services.tumblr.run as tumblr
+import ciftag.services.flickr.run as flickr
 from ciftag.settings import SERVER_TYPE, TIMEZONE, env_key
 from ciftag.models import enums
 from ciftag.utils.converter import get_traceback_str
@@ -159,10 +161,32 @@ def runner(run_type: str, container_work_id: int):
                         content['data'],
                         REDIS_NAME
                     )
-                # TODO
-                # elif run_type == "tumblr":
-                # elif run_type == "flicker":
-
+                elif run_type == "tumblr":
+                    result = tumblr.run(
+                        task_id,
+                        work_id,
+                        content['info_id'],
+                        content['cred_info'],
+                        runner_identify,
+                        goal_cnt,
+                        content['data'],
+                        REDIS_NAME
+                    )
+                elif run_type == "flicker":
+                    result = flickr.run(
+                        task_id,
+                        work_id,
+                        content['info_id'],
+                        content['cred_info'],
+                        runner_identify,
+                        goal_cnt,
+                        content['data'],
+                        REDIS_NAME
+                    )
+                else:
+                    # debug용 컨테이너
+                    while True:
+                        time.sleep(60*60*3)
 
                 # 실패 시 큐 재삽입
                 if not result['result'] and result["message"]:
