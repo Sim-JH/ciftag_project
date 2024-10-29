@@ -41,20 +41,21 @@ RUN apt-get update && \
 RUN apt-get update && \
     apt-get install libgl1-mesa-glx -y
 
-# Install python packages
+# move module first
+COPY . /src/module
+RUN rm -rf /src/module/ciftag/ml && rm -f /src/module/requirements.txt
+
+# Install python packages & overwright requirements
 RUN python3 -m ensurepip --upgrade
 RUN pip install --upgrade pip setuptools
-COPY ./requirements.txt /src/module/requirements.txt
-RUN pip install -r /src/module/requirements.txt --ignore-installed
+RUN pip install -r /src/module/docker/ecr/requirements.txt --ignore-installed
 
 # Install playwright
 RUN playwright install
 RUN playwright install-deps
 
 # Install ciftag package
-COPY . /src/module
 WORKDIR /src/module
-RUN rm -rf /src/module/ciftag/ml
 RUN pip install -e .
 
 # Dsize image
