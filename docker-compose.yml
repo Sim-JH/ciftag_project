@@ -1,4 +1,4 @@
-version: '2.18.1'
+version: '3'
 
 services:
     dev:
@@ -92,6 +92,7 @@ services:
             - $PWD/airflow/scripts:/opt/airflow/scripts
             - $PWD/airflow/logs:/opt/airflow/logs
             - $PWD/airflow/plugins:/opt/airflow/plugins
+        ports: []
         networks:
             - ciftag_network
         command: airflow scheduler
@@ -160,7 +161,7 @@ services:
         volumes:
             - ciftag-es:/usr/share/elasticsearch/data
         ports:
-            - "9200:9200"
+            - 9200:9200
         env_file:
             - docker/env/elastic.env
         networks:
@@ -183,7 +184,7 @@ services:
             - ELASTICSEARCH_URL=http://elasticsearch:9200
             - ELASTICSEARCH_HOSTS=["http://elasticsearch:9200"]
         ports:
-            - "5601:5601"
+            - 5601:5601
         env_file:
             - docker/env/kibana.env
         networks:

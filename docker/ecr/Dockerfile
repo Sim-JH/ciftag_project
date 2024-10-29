@@ -54,6 +54,7 @@ RUN playwright install-deps
 # Install ciftag package
 COPY . /src/module
 WORKDIR /src/module
+RUN rm -rf /src/module/ciftag/ml
 RUN pip install -e .
 
 # Dsize image
