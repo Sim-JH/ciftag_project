@@ -37,7 +37,6 @@ def exit_handler():
 
         task_result = aggregate_task_result(work_id=_work_id)
 
-        # TODO airflow 상위 task dag 구현 이후 동적 호출 방법 수정
         for target, get_cnt, elapsed_time in task_result:
             airflow_param = {
                 'work_id': _work_id,
@@ -47,7 +46,7 @@ def exit_handler():
             }
 
             try:
-                url = f"http://{env_key.AIRFLOW_URI}:{env_key.AIRFLOW_PORT}/api/v1/dags/rrun-after-crawl/dagRuns"
+                url = f"http://{env_key.AIRFLOW_URI}:{env_key.AIRFLOW_PORT}/api/v1/dags/run-after-crawl/dagRuns"
                 headers = {
                     "content-type": "application/json",
                     "Accept": "application/json",

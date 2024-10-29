@@ -3,13 +3,11 @@ import sys
 import time
 import argparse
 
-import uvicorn
 import sqlalchemy
 
 import ciftag.utils.logger as logger
 import ciftag.fargate.run as fargate_crawl
 from ciftag.utils import bootstrap
-from ciftag.web.app import create_app
 from ciftag.configuration import conf
 
 
@@ -27,6 +25,9 @@ def restart_worker(args):
 
 def start_api_server(args):
     """API 서버 시작. 필요 시 데이터베이스 초기화도 수행"""
+    import uvicorn
+    from ciftag.web.app import create_app
+
     if args.initdb:
         print("Run API server with Init tables")
         # 1분간 6회에 걸쳐 접속 요청
@@ -144,7 +145,7 @@ class CiftagParser:
         parser.add_argument(
             "run_type",
             type=str,
-            choices=['pinterest', 'test'],
+            choices=['pinterest', 'tumblr', 'flicker', 'test'],
             help="Specify the type of the crawler to run"
         )
         parser.add_argument(
