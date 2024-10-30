@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 
 from airflow import DAG
 from airflow.operators.python import PythonOperator
+from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 
 default_args = {"start_date": datetime(2024, 9, 5)}
@@ -18,7 +19,7 @@ def generate_info_update_sql_task(**kwargs):
     info_id = conf.get('info_id')
     target = conf.get('target')
     hits = conf.get('hits')
-    elapsed_time = float(conf.get('elapsed_time'))
+    elapsed_time = float(conf.get('elapsed_time')) if conf.get('elapsed_time') not in [None, 'None'] else 0
 
     if target == "pinterest":
         target_table = "pint_crawl_info"
@@ -27,10 +28,13 @@ def generate_info_update_sql_task(**kwargs):
     elif target == "flicker":
         target_table = "flicker_crawl_info"
 
+    if info_id in [None, 'None']:
+        postgres_hook = PostgresHook(postgres_conn_id="main_postgresql_dev_connection")
+        info_id = postgres_hook.get_first(f"SELECT id FROM {target_table} WHERE work_pk='{work_id}';")[0]
+
     # SQL 쿼리 생성
     query = f"""UPDATE {target_table} SET hits='{hits}', elapsed_time='{timedelta(seconds=elapsed_time)}' WHERE id='{info_id}';"""
 
-    # 파일 경로를 XCom으로 반환
     return {'query': query, 'work_id': work_id}
 
 
