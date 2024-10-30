@@ -100,7 +100,6 @@ def run(
     # 결과 적재
     photos = result['photos']
     logs.log_data(f'--- Task-{task_id} {PAGETYPE} 결과 적재')
-    update_task_status(task_id, {'task_sta': enums.TaskStatusCode.result.name, 'get_cnt': len(photos)})
 
     for photo in photos:
         photo.update({
@@ -113,5 +112,6 @@ def run(
 
     end_dt = datetime.now(TIMEZONE)
     elapsed_time = time.time() - start_time
+    update_task_status(task_id, {'task_sta': enums.TaskStatusCode.result.name, 'get_cnt': len(photos), 'end_dt': end_dt})
 
     return {'result': True, 'hits': len(photos), 'elapsed_time': elapsed_time, 'end_dt': end_dt}

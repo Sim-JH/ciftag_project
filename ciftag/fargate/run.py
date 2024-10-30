@@ -29,7 +29,7 @@ def exit_handler():
     result = check_task_status(work_id=_work_id)
 
     # work_id == ecs task 그룹 / 각 task는 대상 사이트를 1개씩만 할당
-    # if 현재 컨테이너가 실행 중인 ecs 중 마자막일 경우
+    # if 현재 컨테이너가 실행 중인 ecs 중 마지막일 경우
     if result is None or len(result) == 0:
         global REDIS_NAME
         redis_m = RedisManager()
@@ -42,7 +42,7 @@ def exit_handler():
                 'work_id': _work_id,
                 'hits': get_cnt,
                 'target': target,
-                'elapsed_time': elapsed_time,
+                'elapsed_time': str(elapsed_time),
             }
 
             try:

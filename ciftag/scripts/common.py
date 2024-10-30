@@ -11,7 +11,7 @@ logs = logger.Logger(log_dir='sql')
 def check_task_status(work_id):
     """내부 작업 현황 조회"""
     task_sql = f"""SELECT task_sta FROM task_info 
-                    WHERE work_pk = {work_id} AND task_sta = 'load'"""
+                    WHERE work_pk = {work_id} AND task_sta != 'result' AND task_sta != 'failed'"""
 
     result = select_sql(task_sql)
 
@@ -33,7 +33,7 @@ def aggregate_task_result(work_id):
                                 ) AS rn
                         FROM task_info 
                         WHERE work_pk = {work_id} 
-                          AND (task_sta = 'success' OR task_sta = 'failed')
+                          AND (task_sta = 'result' OR task_sta = 'failed')
                     )
                     SELECT target, total_cnt, elapsed_time
                     FROM ranked_rows
