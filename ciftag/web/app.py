@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from ciftag.version import version
+from version import version
 from ciftag.configuration import conf
 from ciftag.exceptions import CiftagAPIException
 from ciftag.web.api import api_router

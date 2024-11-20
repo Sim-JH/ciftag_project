@@ -1,4 +1,5 @@
-from ciftag import settings, version
+from ciftag import settings
+import version
 
 __version__ = version.version
 

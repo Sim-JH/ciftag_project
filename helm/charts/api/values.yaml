@@ -1,0 +1,53 @@
+replicaCount: 1  # TODO HPA 기반으로 변경
+
+image:
+  repository: ciftag-api-module
+  tag: latest
+  pullPolicy: Never  # 로컬 도커 이미지 사용
+
+service:
+  type: ClusterIP
+  port: 80
+
+resources:
+  limits:
+    cpu: "2000m"
+    memory: "2048Mi"
+  requests:
+    cpu: "1000m"
+    memory: "1024Mi"
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+env:
+  - name: RUN_ON
+    value: local
+  - name: SERVER_TYPE
+    value: dev
+
+volumeMounts:
+  - mountPath: /datadrive
+    name: datadrive
+  - mountPath: /src/module/ciftag
+    name: module-code
+
+volumes:
+  - name: datadrive
+    hostPath:
+      path: /mnt/ciftag/datadrive
+  - name: module-code
+    hostPath:
+      path: /mnt/c/my_project/ciftag_project/ciftag
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations: {}
+  hosts:
+    - host: ciftag-module.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
