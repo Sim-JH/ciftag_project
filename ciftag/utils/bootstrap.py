@@ -34,15 +34,20 @@ def initdb(aws=False, debug=False):
                 'DB_PORT': '',
             }
         )
+
+        url = f"postgresql://{key_body['DB_USERNAME']}:{key_body['DB_PASSWORD']}@{key_body['DB_HOST']}:{key_body['DB_PORT']}/{SERVER_TYPE}",
         aws_engine = create_engine(
-            f"postgresql://{key_body['DB_USERNAME']}:{key_body['DB_PASSWORD']}@{key_body['DB_HOST']}:{key_body['DB_PORT']}/{SERVER_TYPE}",
+            url,
             pool_size=10,
             max_overflow=10,
             pool_pre_ping=True,
             pool_recycle=300
         )
+
+        logs.log_data(f'Cunnecting to {key_body['DB_HOST']}:{key_body['DB_PORT']}')
         Base.metadata.create_all(aws_engine)
     else:
+        logs.log_data(f'Cunnecting to {engine.url}')
         Base.metadata.create_all(engine)
 
     # 그 외 초기 데이터 추가 필요 시
