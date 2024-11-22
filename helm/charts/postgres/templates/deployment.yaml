@@ -24,7 +24,7 @@ spec:
             - configMapRef:
                 name: {{ .Release.Name }}-env
                 # kubectl create configmap ciftag-postgres-env --from-env-file=docker/env/postgres.env -n ciftag
-                #  configmap.yaml을 쓸 경우 파일 참조의 경우는 helm 내부에 파일이 위치할 경우만 가능
+                # configmap.yaml을 쓸 경우 파일 참조의 경우는 helm 내부에 파일이 위치할 경우만 가능
           volumeMounts:
             - name: postgres-data
               mountPath: /var/lib/postgresql/data

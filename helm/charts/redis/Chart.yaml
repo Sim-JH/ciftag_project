@@ -1,0 +1,4 @@
+apiVersion: v2
+name: ciftag-redis
+description: A minimal Redis Helm Chart
+version: 2.0.0

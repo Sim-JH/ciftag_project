@@ -1,0 +1,23 @@
+image:
+  repository: ciftag-redis
+  tag: latest
+  pullPolicy: Never
+
+replicaCount: 1
+
+service:
+  type: ClusterIP
+  port: 6379
+
+resources:
+  limits:
+    memory: 256Mi
+    cpu: 500m
+  requests:
+    memory: 128Mi
+    cpu: 250m
+
+healthcheck:
+  interval: 10s
+  timeout: 5s
+  retries: 3
