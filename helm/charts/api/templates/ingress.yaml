@@ -4,10 +4,12 @@ kind: Ingress
 metadata:
   name: {{ .Release.Name }}
   annotations:
-    {{- range $key, $value := .Values.ingress.annotations }}
-    {{ $key }}: {{ $value | quote }}
-    {{- end }}
+    nginx.ingress.kubernetes.io/enable-debug: "true"
+#    {{- range $key, $value := .Values.ingress.annotations }}
+#    {{ $key }}: {{ $value | quote }}
+#    {{- end }}
 spec:
+  ingressClassName: {{ .Values.ingress.className }}
   rules:
   {{- range .Values.ingress.hosts }}
   - host: {{ .host }}
@@ -18,7 +20,7 @@ spec:
         pathType: {{ .pathType }}
         backend:
           service:
-            name: {{ $.Release.Name }}
+            name: {{ $.Release.Name }}-svc
             port:
               number: {{ $.Values.service.port }}
       {{- end }}

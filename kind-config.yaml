@@ -1,0 +1,10 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+    extraMounts:
+      - hostPath: /mnt/c/my_project/ciftag_project
+        containerPath: /mnt/c/my_project/ciftag_project
+    extraPortMappings:  # kind 클러스터 포트매핑 # https://blog.naver.com/techshare/222289356993
+      - containerPort: 30000  # 내부 포트
+        hostPort: 30001  # 로컬 포트
