@@ -52,6 +52,12 @@ RUN pip install --upgrade pip setuptools
 COPY ./requirements.txt /src/module/requirements.txt
 RUN pip install -r /src/module/requirements.txt --ignore-installed
 
+# Install Kafka CLI
+RUN wget -qO- https://downloads.apache.org/kafka/3.8.1/kafka_2.13-3.8.1.tgz | tar -xz -C /opt/ && \
+    ln -s /opt/kafka_2.13-3.8.1 /opt/kafka && \
+    ln -s /opt/kafka/bin/* /usr/bin/ && \
+    rm -rf /opt/kafka_2.13-3.4.0.tgz
+
 # Install playwright
 RUN playwright install
 RUN playwright install-deps

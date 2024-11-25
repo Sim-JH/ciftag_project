@@ -1,0 +1,21 @@
+{{- if .Values.subConsumer.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: sub-crawl-{{ .Chart.Name }}-hpa
+  namespace: {{ .Release.Namespace }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: sub-crawl-{{ .Chart.Name }}
+  minReplicas: {{ .Values.subConsumer.minReplicas }}
+  maxReplicas: {{ .Values.subConsumer.maxReplicas }}
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
+{{- end }}

@@ -1,0 +1,36 @@
+{{- if .Values.subConsumer.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sub-crawl-{{ .Chart.Name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.subConsumer.minReplicas }}
+  selector:
+    matchLabels:
+      app: sub-crawl-{{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: sub-crawl-{{ .Chart.Name }}
+    spec:
+      containers:
+      - name: sub-crawl-{{ .Chart.Name }}
+        image: "{{ .Values.subConsumer.image.repository }}:{{ .Values.subConsumer.image.tag }}"
+        imagePullPolicy: {{ .Values.subConsumer.image.pullPolicy }}
+        env:
+        - name: KAFKA_BROKER
+          value: "{{ .Values.kafka.brokerUrl }}"
+        - name: CONSUMER_GROUP
+          value: "{{ .Values.subConsumer.groupId }}"
+        # command: [ "supervisord -c /etc/supervisord.conf" ]   # TODO 커맨드와 볼륨은 모듈 수정 후 변경
+        command: ["/bin/bash", "-c", "sleep infinity"]
+        volumeMounts:
+        {{- with .Values.volumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      volumes:  # 로컬 볼륨 마운트이므로 로컬 노드에서만 사용 가능. ebs의 경우 별도 방식
+      {{- with .Values.volumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+{{- end }}

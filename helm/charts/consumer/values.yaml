@@ -1,0 +1,58 @@
+kafka:
+  brokerUrl: "kafka.kafka-namespace.svc.cluster.local:9092"
+
+topics:
+  - name: "main_crawl_task_topic"
+    partitions: 10
+    replicationFactor: 1
+  - name: "sub_crawl_task_topic"
+    partitions: 100
+    replicationFactor: 1
+
+mainConsumer:
+  enabled: true
+  replicas: 3
+  groupId: "main-crawl-task-consumer-group"
+  image:
+    repository: ciftag-api-module
+    tag: "latest"
+    pullPolicy: Never
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+subConsumer:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 10
+  groupId: "sub-crawl-task-consumer-group"
+  image:
+    repository: ciftag-api-module
+    tag: "latest"
+    pullPolicy: Never
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+
+# 아래 사항은 모듈 수정 후 필요에 따라
+volumeMounts:
+  - mountPath: /datadrive
+    name: datadrive
+  - mountPath: /src/module/ciftag
+    name: module-code
+
+volumes:
+  - name: datadrive
+    hostPath:
+      path: /mnt/ciftag/datadrive
+  - name: module-code
+    hostPath:
+      path: /mnt/c/my_project/ciftag_project/ciftag

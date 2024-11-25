@@ -1,0 +1,4 @@
+apiVersion: v2
+name: consumer
+description: Helm Chart for Kafka Consumer
+version: 0.1.0
