@@ -27,6 +27,14 @@ class EnvKeys:
         self.DB_PORT: int = int(os.getenv("DB_PORT", 3306))
         self.DB_USERNAME: str = os.getenv("DB_USERNAME", None)
         self.DB_PASSWORD: str = os.getenv("DB_PASSWORD", None)
+
+        # kafka 관련
+        self.KAFKA_BOOTSTRAP_SERVERS: str = os.getenv(
+            "KAFKA_BOOTSTRAP_SERVERS", "kafka.kafka-namespace.svc.cluster.local:9092"
+        )
+        self.KAFKA_MAIN_CRAWL_TOPIC: str = os.getenv("KAFKA_MAIN_CRAWL_TOPIC", "main_crawl_task_topic")
+        self.KAFKA_SUB_CRAWL_TOPIC: str = os.getenv("KAFKA_SUB_CRAWL_TOPIC", "sub_crawl_task_topic")
+        self.KAFKA_AGGREGATE_CRAWL_TOPIC: str = os.getenv("KAFKA_AGGREGATE_CRAWL_TOPIC", "aggregate_crawl_task_topic")
         # endregion
 
         # elasticsearch 관련
@@ -51,5 +59,8 @@ class EnvKeys:
 
         # 작업 관련
         self.MAX_RETRY: int = os.getenv("MAX_RETRY", 3)
-        self.CELERY_WORKER: int = os.getenv("CELERY_WORKER", 10)
+        # self.CELERY_WORKER: int = os.getenv("CELERY_WORKER", 10)
+        self.MAIN_CRAWL_PARTISION: int = os.getenv("MAIN_CRAWL_PARTISION", 10)
+        self.SUB_CRAWL_PARTISION: int = os.getenv("SUB_CRAWL_PARTISION", 100)
+        self.AGGREGATE_CRAWL_PARTISION: int = os.getenv("AGGREGATE_CRAWL_PARTISION", 5)
         self.ECS_WORKER: int = os.getenv("ECS_WORKER", 10)
