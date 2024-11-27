@@ -33,6 +33,7 @@ class EnvKeys:
             "KAFKA_BOOTSTRAP_SERVERS", "kafka.kafka-namespace.svc.cluster.local:9092"
         )
         self.KAFKA_MAIN_CRAWL_TOPIC: str = os.getenv("KAFKA_MAIN_CRAWL_TOPIC", "main_crawl_task_topic")
+        self.KAFKA_MAIN_CRAWL_DLQ: str = os.getenv("KAFKA_MAIN_CRAWL_DLQ", "main_crawl_task_dlq")
         self.KAFKA_SUB_CRAWL_TOPIC: str = os.getenv("KAFKA_SUB_CRAWL_TOPIC", "sub_crawl_task_topic")
         self.KAFKA_AGGREGATE_CRAWL_TOPIC: str = os.getenv("KAFKA_AGGREGATE_CRAWL_TOPIC", "aggregate_crawl_task_topic")
         # endregion
@@ -59,6 +60,7 @@ class EnvKeys:
 
         # 작업 관련
         self.MAX_RETRY: int = os.getenv("MAX_RETRY", 3)
+        self.MAX_IMAGE_PER_SUB_TASK: int = os.getenv("MAX_IMAGE_PER_SUB_TASK", 10)
         # self.CELERY_WORKER: int = os.getenv("CELERY_WORKER", 10)
         self.MAIN_CRAWL_PARTISION: int = os.getenv("MAIN_CRAWL_PARTISION", 10)
         self.SUB_CRAWL_PARTISION: int = os.getenv("SUB_CRAWL_PARTISION", 100)

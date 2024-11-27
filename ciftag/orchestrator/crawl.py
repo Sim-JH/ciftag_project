@@ -1,12 +1,12 @@
+import json
 from typing import Any, Dict, List, Tuple, Union
 
 import requests
-from celery import chain, group
+from kafka import KafkaProducer
 
 import ciftag.utils.logger as logger
 from ciftag.settings import SERVER_TYPE, env_key
 from ciftag.exceptions import CiftagAPIException
-from ciftag.celery_app import app
 from ciftag.utils.crypto import CiftagCrypto
 from ciftag.utils.converter import convert_enum_in_data
 from ciftag.models import PinterestCrawlInfo, TumblrCrawlInfo, FlickrCrawlInfo, enums
@@ -24,6 +24,13 @@ class CrawlTriggerDispatcher:
         # 현재 db를 환경별로 별도로 사용하므로, cred_info table 각각 따로 존재 할 수 있어 pk가 아닌, cred_id+target_code로 personal 구분
         self.cred_pk_list = []
         self.cred_info_list = []
+
+        # Kafka 관련
+        self.kafka_producer = KafkaProducer(
+            bootstrap_servers=env_key.KAFKA_BOOTSTRAP_SERVERS,
+            value_serializer=lambda v: json.dumps(v).encode('utf-8')
+        )
+        self.kafka_main_topic = env_key.KAFKA_MAIN_CRAWL_TOPIC
 
         # Enum은 호출 상위에서 검증
         self.run_on = data['run_on']
@@ -48,35 +55,21 @@ class CrawlTriggerDispatcher:
 
     def _trigger_local(self, task_body):
         # celery worker run
-        # TODO 작업 분배 수식 개선
-        segments = self._cal_segment(task_cnt=env_key.CELERY_WORKER)
+        segments = self._cal_segment(task_cnt=env_key.MAIN_CRAWL_PARTISION)
 
-        tasks = []
-
-        error_s = app.signature("ciftag.callbacks.task_fail")
-
+        # 라운드 로빈으로 작업 배분
         for idx, goal_cnt in enumerate(segments):
             task_body.update({'goal_cnt': int(goal_cnt)})
 
-            run_s = app.signature(
-                f"ciftag.task.{self.target_code.name}_run",
-                kwargs=task_body
-            ).set(queue='task')
-            tasks.append(run_s.on_error(error_s))
-
-        # 작업 모음 실행 및 완료 후 실행될 작업 추가 (chord(tasks)(callback)은 모든 작업 성공이 보장되어야함)
-        after_task_s = app.signature(
-            f"ciftag.task.{self.target_code.name}_after",
-            kwargs={
-                'work_id': task_body['work_id'],
-                'info_id': task_body['info_id'],
-                'redis_name': task_body['redis_name'],
+            message = {
+                'task_body': task_body,
             }
-        )
-        # aws 에선 모든 컨테이너 종료 후 실행 작업
-        run_group = group(*tasks)
-        run_workflow = chain(run_group, after_task_s)
-        run_workflow.apply_async()
+            self.kafka_producer.send(
+                self.kafka_main_topic,
+                json.dumps(message).encode('utf-8'),
+            )
+
+        self.kafka_producer.flush()
 
     def _trigger_aws(self, task_body):
         # sqs put & git action trigger
