@@ -74,7 +74,8 @@ class TaskStatusCode(Enum):
     run = "110"  # 수집 시작
     login = "120"  # 로그인
     search = "130"  # 태그 검색
-    result = "140"  # 결과 인입
+    parse = "140"  # 이미지 url 가져오기
+    result = "150"  # 결과 인입
 
     # 작업 완료 관련
     success = "200"  # 작업 성공
