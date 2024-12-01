@@ -32,7 +32,7 @@ def run(
         redis_name: str,
         headless: bool = True
 ):
-    """ 핀터레스트 크롤러
+    """ 핀터레스트 크롤링 메인 타스크
     :param task_id: 내부 작업 ID
     :param cred_info: 계정 정보
     :param runner_identify: 처리기 식별자
@@ -43,7 +43,7 @@ def run(
     """
     time.sleep(random.randrange(1, 10))
     start_time = time.time()
-    logs = logger.Logger(log_dir=PAGETYPE, log_name=runner_identify)
+    logs = logger.Logger(log_dir=f'Crawl/{PAGETYPE}/Main', log_name=runner_identify)
     logs.log_data(f'--- 작업 시작 task id: {task_id}')
     update_task_status(task_id, {'task_sta': enums.TaskStatusCode.run.name})
 
@@ -79,7 +79,7 @@ def run(
         if not result['result']:
             return result
 
-        # 이미지 리스트 추출
+        # 태그 기반 원본 페이지 url 크롤링
         result = execute_with_logging(
             search.get_thumbnail_url, logs, task_id, result['page'], redis_name, tag, goal_cnt
         )

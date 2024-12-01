@@ -46,17 +46,17 @@ class WorkInfoHistory(Base):
 
 class TaskInfo(Base):
     """내부 작업 정보 이력
-    task는 ecs fargate or celery worker 별로 한 개씩 발행
-    queue 번호는 크롤링 목표 이미지에 따라 큐를 나누고 순서대로 번호를 붙인 것
+    요청으로부터 main topic으로 분할된 task 수행 이력
+    task마다 1개씩 발행
     """
     
     __tablename__ = "task_info"
 
     id = Column(Integer, primary_key=True)
     work_pk = Column(Integer)  # 작업 정보 ID (FK)
-    runner_identify = Column(String)  # 현재 처리기 [worker or continaer] (work_id + host_name + real ip + time)
-    body = Column(Text)  # queue body 정보
-    task_sta = Column(Enum(enums.TaskStatusCode))  # 내부 작업 상태
+    runner_identify = Column(String)  # 처리기 식별자
+    body = Column(Text)  # body 정보
+    task_sta = Column(Enum(enums.TaskStatusCode))  # 작업 상태
     get_cnt = Column(Integer)  # 크롤링 한 이미지 정보 갯수  
     goal_cnt = Column(Integer)  # 할당 받은 이미지 정보 갯수
     msg = Column(String, default=None)  # 에러 메시지
@@ -66,10 +66,7 @@ class TaskInfo(Base):
 
 
 class TaskInfoHist(Base):
-    """내부 작업 정보 이력
-    task는 ecs fargate or celery worker 별로 한 개씩 발행
-    queue 번호는 크롤링 목표 이미지에 따라 큐를 나누고 순서대로 번호를 붙인 것
-    """
+    """내부 작업 정보 이력 히스토리"""
 
     __tablename__ = "task_info_hist"
 
@@ -80,7 +77,7 @@ class TaskInfoHist(Base):
     )  # 사용자 정보 ID (FK)
     work_pk = Column(Integer)  # 작업 정보 ID (FK)
     runner_identify = Column(String)  # 현재 처리기 (worker: work_id + celery task id/fargate: host_name + real ip) + time
-    task_sta = Column(Enum(enums.TaskStatusCode))  # 내부 작업 상태
+    task_sta = Column(Enum(enums.TaskStatusCode))  # 작업 상태
     get_cnt = Column(Integer)  # 크롤링 한 이미지 정보 갯수
     goal_cnt = Column(Integer)  # 할당 받은 이미지 정보 갯수
     msg = Column(String, default=None)  # 에러 메시지
@@ -91,3 +88,47 @@ class TaskInfoHist(Base):
         DateTime(timezone=True), default=lambda: datetime.now(TIMEZONE)
     )
 
+
+class SubTaskInfo(Base):
+    """서브 작업 정보 이력
+    main topic -> sub topic으로 다시 n개로 분할된 sub task 수행 이력
+    sub task마다 1개씩 발행
+    """
+
+    __tablename__ = "sub_task_info"
+
+    id = Column(Integer, primary_key=True)
+    task_pk = Column(Integer)  # 메인 topic 작업 정보 ID (FK)
+    runner_identify = Column(String)  # 처리기 식별자
+    task_sta = Column(Enum(enums.TaskStatusCode))  # 작업 상태
+    body = Column(Text)  # body 정보
+    get_cnt = Column(Integer)  # 크롤링 한 이미지 정보 갯수
+    goal_cnt = Column(Integer)  # 할당 받은 이미지 정보 갯수
+    msg = Column(String, default=None)  # 에러 메시지
+    traceback = Column(Text, default=None)  # 추적 로그
+    start_dt = Column(DateTime(timezone=True), default=lambda: datetime.now(TIMEZONE))  # 시작 시간
+    end_dt = Column(DateTime(timezone=True), nullable=True)  # 종료 시간
+
+
+class SubTaskInfoHist(Base):
+    """서브 작업 정보 이력 히스토리 """
+
+    __tablename__ = "sub_task_info_hist"
+
+    id = Column(Integer, primary_key=True)
+    sub_task_pk = Column(
+        Integer,
+        ForeignKey("sub_task_info.id")
+    )  # 세부 정보 ID (FK)
+    task_pk = Column(Integer)  # 메인 topic 작업 정보 ID (FK)
+    runner_identify = Column(String)  # 처리기 식별자
+    task_sta = Column(Enum(enums.TaskStatusCode))  # 작업 상태
+    get_cnt = Column(Integer)  # 크롤링 한 이미지 정보 갯수
+    goal_cnt = Column(Integer)  # 할당 받은 이미지 정보 갯수
+    msg = Column(String, default=None)  # 에러 메시지
+    traceback = Column(Text, default=None)  # 추적 로그
+    start_dt = Column(DateTime(timezone=True), default=lambda: datetime.now(TIMEZONE))  # 시작 시간
+    end_dt = Column(DateTime(timezone=True), nullable=True)  # 종료 시간
+    created_at = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(TIMEZONE)
+    )
