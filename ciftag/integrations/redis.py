@@ -80,3 +80,12 @@ class RedisManager:
         """key의 만료시간 조회"""
         return self.redis.ttl(name)
 
+    def get_all(self, name):
+        """key hgetall"""
+        return self.redis.hgetall(name)
+
+    def incrby_key(self, redis_key, task_key, amount=1):
+        """"""
+        self.redis.hincrby(redis_key, task_key, amount)
+        self.redis.expire(redis_key, 60*60)
+

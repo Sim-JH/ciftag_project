@@ -42,7 +42,6 @@ def run(
     :param headless: 헤드리스 모드 여부
     """
     time.sleep(random.randrange(1, 10))
-    start_time = time.time()
     logs = logger.Logger(log_dir=f'Crawl/{PAGETYPE}/Main', log_name=runner_identify)
     logs.log_data(f'--- 작업 시작 task id: {task_id}')
     update_task_status(task_id, {'task_sta': enums.TaskStatusCode.run.name})
@@ -58,7 +57,6 @@ def run(
         ciftag_crypto.load_key(crypto_key.encode())
         cred_pw = ciftag_crypto.decrypt_text(cred_pw)
 
-    # TODO proxy setting
     proxy_settings = {}
     api_proxies = {}
 
@@ -90,5 +88,8 @@ def run(
         context.close()
         browser.close()
 
-    update_task_status(task_id, {'task_sta': enums.TaskStatusCode.parse.name})
+    end_dt = datetime.now(TIMEZONE)
+    update_task_status(
+        task_id, {'task_sta': enums.TaskStatusCode.parse.name, 'get_cnt': len(result['pins']), 'end_dt': end_dt}
+    )
     return {'result': True, 'pins': result['pins']}

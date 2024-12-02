@@ -25,7 +25,6 @@ def run(
         sub_task_id: int,
         info_id: int,
         runner_identify: str,
-        goal_cnt: int,
         data: Dict[str, Any],
         headless: bool = True
 ):
@@ -33,12 +32,10 @@ def run(
     :param sub_task_id: 세부 작업 ID
     :param info_id: 수행 정보 ID
     :param runner_identify: 처리기 식별자
-    :param goal_cnt: 목표 수량
     :param data: 메타 데이터
     :param headless: 헤드리스 모드 여부
     """
     time.sleep(random.randrange(1, 10))
-    start_time = time.time()
     logs = logger.Logger(log_dir=f"Crawl/{PAGETYPE}/Sub", log_name=runner_identify)
     update_sub_task_status(sub_task_id, {'task_sta': enums.TaskStatusCode.run.name})
     logs.log_data(f'--- 작업 시작 task id: {sub_task_id}')
@@ -91,9 +88,8 @@ def run(
         insert_pint_result(pin)
 
     end_dt = datetime.now(TIMEZONE)
-    elapsed_time = time.time() - start_time
     update_sub_task_status(
         sub_task_id, {'task_sta': enums.TaskStatusCode.success.name, 'get_cnt': len(pins), 'end_dt': end_dt}
     )
 
-    return {'result': True, 'hits': len(pins), 'elapsed_time': elapsed_time, 'end_dt': end_dt}
+    return {'result': True, 'hits': len(pins)}
