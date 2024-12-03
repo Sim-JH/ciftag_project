@@ -76,6 +76,10 @@ class RedisManager:
         """key의 제한시간 설정"""
         self.redis.expire(name, limit_cnt)
 
+    def set_nx(self, name, field, value):
+        """필드가 존재하지 않을 경우만 설정"""
+        self.redis.hsetnx(name, field, value)
+
     def get_ttl(self, name):
         """key의 만료시간 조회"""
         return self.redis.ttl(name)

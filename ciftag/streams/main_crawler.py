@@ -41,7 +41,7 @@ def main_crawl_interface():
 
     # 컨슈머 로깅
     runner_identify = f"main-{consumer.config.get('client_id')[:8]}"
-    logs = logger.Logger(log_dir='Main_Crawler', log_name=runner_identify)
+    logs = logger.Logger(log_dir='Streams/Main_Crawler', log_name=runner_identify)
     logs.log_data(f'Start main crawl consumer: {runner_identify}')
     logs.log_data(f"Subscribed Topics: {consumer.subscription()}")
 
@@ -94,6 +94,8 @@ def main_crawl_interface():
 
         # 집계용 키
         agt_key = f"work_id:{work_id}"
+        # 시작 시간 설정 (해당 키에 값이 없을 경우)
+        redis_m.set_nx(work_id, 'created_at', task_meta['start_dt'])
         # 해당 work_id에 대한 task cnt 증가
         redis_m.incrby_key(agt_key, "total_tasks")
         redis_m.incrby_key(agt_key, "task_goal", amount=task_body['goal_cnt'])
@@ -107,6 +109,7 @@ def main_crawl_interface():
             signal.alarm(env_key.TASK_TIME_OUT)
 
             # 섬네일 크롤링 수행
+            # TODO 추후 target 별 배분
             result = pinterest.run(
                 task_id=task_id,
                 cred_info=task_body['cred_info'],
@@ -162,7 +165,6 @@ def main_crawl_interface():
                 consumer.commit()
             # topic 전송 실패
             except KafkaError as e:
-                # TODO 토픽 전송 실패에 대한 처리
                 logs.log_data(f"Failed to send message to Kafka: {e}")
 
         except TimeoutError as exc:
