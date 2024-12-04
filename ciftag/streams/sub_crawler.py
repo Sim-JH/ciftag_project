@@ -17,9 +17,9 @@ from ciftag.utils.converter import get_traceback_str
 from ciftag.scripts.common import insert_sub_task_status, update_sub_task_status
 
 
-def sub_crawl_interface(consumer_type: Literal["main", "retry"]):
+def sub_crawl_interface(task_type: Literal["common", "retry"]):
     # 서브 컨슈머가 실행할 로직
-    if consumer_type == "retry":
+    if task_type == "retry":
         consumer = KafkaConsumer(
             env_key.KAFKA_SUB_CRAWL_RETRY_TOPIC,
             bootstrap_servers=env_key.KAFKA_BOOTSTRAP_SERVERS,
