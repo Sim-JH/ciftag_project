@@ -61,6 +61,20 @@ def run_crawler(args):
         fargate_crawl.runner(args.run_type, int(args.work_id))
 
 
+def run_consumer(args):
+    from ciftag.streams import (
+        main_crawler,
+        sub_crawler,
+        aggregate_crawl
+    )
+    if args.consumer_type == "main":
+        main_crawler.main_crawl_interface()
+    elif args.consumer_type == "sub":
+        sub_crawler.sub_crawl_interface(args.task_type)
+    else:
+        aggregate_crawl.aggregate_interface()
+
+
 class CiftagParser:
     """cli args 파싱 및 해당 작업 호출"""
     def __init__(self):
@@ -72,6 +86,7 @@ class CiftagParser:
             db          handling database
             api         execute api server
             crawl       execute crawler
+            kafka       execute kafka consumer
         """,
         )
         self.parser.add_argument("command", help="Subcommand to run")
@@ -154,6 +169,27 @@ class CiftagParser:
             help="Specify the work ident"
         )
         parser.set_defaults(func=run_crawler)
+
+        return parser
+
+    def kafka(self):
+        """수집기 실행 명령어 처리 (현재는 sqs 큐 소비 쪽만 구현)"""
+        parser = argparse.ArgumentParser(
+            prog="ciftag kafka", description="execute kafka consumer"
+        )
+        parser.add_argument(
+            "consumer_type",
+            type=str,
+            choices=['main', 'sub', 'agt'],
+            help="Specify the type of the task for consumer"
+        )
+        parser.add_argument(
+            "task_type",
+            type=str,
+            choices=['common', 'retry'],
+            help="Specify the common or retry task"
+        )
+        parser.set_defaults(func=run_consumer)
 
         return parser
 

@@ -64,9 +64,10 @@ class CrawlTriggerDispatcher:
             message = {
                 'task_body': task_body,
             }
+
             self.kafka_producer.send(
                 self.kafka_main_topic,
-                json.dumps(message).encode('utf-8'),
+                message
             )
 
         self.kafka_producer.flush()

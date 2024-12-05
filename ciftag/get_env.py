@@ -30,7 +30,7 @@ class EnvKeys:
 
         # kafka 관련
         self.KAFKA_BOOTSTRAP_SERVERS: str = os.getenv(
-            "KAFKA_BOOTSTRAP_SERVERS", "kafka.kafka-namespace.svc.cluster.local:9092"
+            "KAFKA_BOOTSTRAP_SERVERS", "kafka.kafka.svc.cluster.local:9092"
         )
         self.KAFKA_MAIN_CRAWL_TOPIC: str = os.getenv("KAFKA_MAIN_CRAWL_TOPIC", "main_crawl_task_topic")
         self.KAFKA_MAIN_CRAWL_DLQ: str = os.getenv("KAFKA_MAIN_CRAWL_DLQ", "main_crawl_task_dlq")

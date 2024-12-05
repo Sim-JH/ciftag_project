@@ -23,8 +23,10 @@ spec:
           value: "{{ .Values.kafka.brokerUrl }}"
         - name: CONSUMER_GROUP
           value: "{{ .Values.mainConsumer.groupId }}"
-        # command: [ "supervisord -c /etc/supervisord.conf" ]   # TODO 커맨드와 볼륨은 모듈 수정 후 변경
-        command: ["/bin/bash", "-c", "sleep infinity"]  # TODO 커맨드와 볼륨은 모듈 수정 후 변경
+        {{- with .Values.env }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        command: ["/bin/bash", "-c", "ciftag kafka main common"]
         volumeMounts:
         {{- with .Values.volumeMounts }}
         {{- toYaml . | nindent 8 }}

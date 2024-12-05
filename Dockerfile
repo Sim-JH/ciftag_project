@@ -52,6 +52,9 @@ RUN pip install --upgrade pip setuptools
 COPY ./requirements.txt /src/module/requirements.txt
 RUN pip install -r /src/module/requirements.txt --ignore-installed
 
+# Install Java for Kafka CLI
+RUN apt-get update && apt-get install -y openjdk-11-jre
+
 # Install Kafka CLI
 RUN wget -qO- https://downloads.apache.org/kafka/3.8.1/kafka_2.13-3.8.1.tgz | tar -xz -C /opt/ && \
     ln -s /opt/kafka_2.13-3.8.1 /opt/kafka && \

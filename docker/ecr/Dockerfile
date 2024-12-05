@@ -1,3 +1,4 @@
+# docker build -t ciftag-crawl-consumer -f ./docker/ecr/Dockerfile .
 FROM ubuntu:22.04
 
 # Set the noninteractive frontend to avoid prompts during package installation
@@ -49,6 +50,15 @@ RUN rm -rf /src/module/ciftag/ml && rm -f /src/module/requirements.txt
 RUN python3 -m ensurepip --upgrade
 RUN pip install --upgrade pip setuptools
 RUN pip install -r /src/module/docker/ecr/requirements.txt --ignore-installed
+
+# Install Java for Kafka CLI
+RUN apt-get update && apt-get install -y openjdk-11-jre
+
+# Install Kafka CLI
+RUN wget -qO- https://downloads.apache.org/kafka/3.8.1/kafka_2.13-3.8.1.tgz | tar -xz -C /opt/ && \
+    ln -s /opt/kafka_2.13-3.8.1 /opt/kafka && \
+    ln -s /opt/kafka/bin/* /usr/bin/ && \
+    rm -rf /opt/kafka_2.13-3.4.0.tgz
 
 # Install playwright
 RUN playwright install

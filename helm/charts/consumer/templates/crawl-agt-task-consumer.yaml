@@ -1,32 +1,32 @@
-{{- if .Values.subConsumer.enabled }}
+{{- if .Values.agtConsumer.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sub-crawl-{{ .Chart.Name }}
+  name: agt-crawl-{{ .Chart.Name }}
   namespace: {{ .Release.Namespace }}
 spec:
-  replicas: {{ .Values.subConsumer.minReplicas }}
+  replicas: {{ .Values.mainConsumer.replicas }}
   selector:
     matchLabels:
-      app: sub-crawl-{{ .Chart.Name }}
+      app: agt-crawl-{{ .Chart.Name }}
   template:
     metadata:
       labels:
-        app: sub-crawl-{{ .Chart.Name }}
+        app: agt-crawl-{{ .Chart.Name }}
     spec:
       containers:
-      - name: sub-crawl-{{ .Chart.Name }}
-        image: "{{ .Values.subConsumer.image.repository }}:{{ .Values.subConsumer.image.tag }}"
-        imagePullPolicy: {{ .Values.subConsumer.image.pullPolicy }}
+      - name: agt-crawl-{{ .Chart.Name }}
+        image: "{{ .Values.agtConsumer.image.repository }}:{{ .Values.agtConsumer.image.tag }}"
+        imagePullPolicy: {{ .Values.agtConsumer.image.pullPolicy }}
         env:
         - name: KAFKA_BROKER
           value: "{{ .Values.kafka.brokerUrl }}"
         - name: CONSUMER_GROUP
-          value: "{{ .Values.subConsumer.groupId }}"
+          value: "{{ .Values.agtConsumer.groupId }}"
         {{- with .Values.env }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-        command: ["/bin/bash", "-c", "ciftag kafka sub common"]
+        command: ["/bin/bash", "-c", "ciftag kafka agt common"]
         volumeMounts:
         {{- with .Values.volumeMounts }}
         {{- toYaml . | nindent 8 }}
