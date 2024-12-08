@@ -8,3 +8,7 @@ nodes:
     extraPortMappings:  # kind 클러스터 포트매핑 # https://blog.naver.com/techshare/222289356993
       - containerPort: 30000  # 내부 포트
         hostPort: 30001  # 로컬 포트
+      - containerPort: 31000  # 내부 포트
+        hostPort: 31001  # 로컬 포트
+      - containerPort: 32000  # 내부 포트
+        hostPort: 32001  # 로컬 포트
