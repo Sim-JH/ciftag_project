@@ -71,8 +71,7 @@ env: []
 # List of additional cli arguments to configure kafka-exporter
 # for example: --log.enable-sarama, --log.level=debug, etc.
 # all the possible args can be found here: https://github.com/danielqsj/kafka_exporter#flags
-extraArgs:
-  - --topic-filter=.*
+extraArgs: []
 
 service:
   type: ClusterIP
