@@ -4,11 +4,17 @@ metadata:
   name: {{ .Chart.Name }}-config
   namespace: {{ .Release.Namespace }}
 data:
+  # 토픽 생성용 스크립트
   create-topics.sh: |
     #!/bin/bash
     {{- range .Values.topics }}
-    kafka-topics.sh --create --topic {{ .name }} \
-      --bootstrap-server {{ $.Values.kafka.brokerUrl }} \
-      --partitions {{ .partitions }} \
-      --replication-factor {{ .replicationFactor }}
+    if ! kafka-topics.sh --bootstrap-server {{ $.Values.kafka.brokerUrl }} --list | grep -q "^{{ .name }}$"; then
+      kafka-topics.sh --create --topic {{ .name }} \
+        --bootstrap-server {{ $.Values.kafka.brokerUrl }} \
+        --partitions {{ .partitions }} \
+        --replication-factor {{ .replicationFactor }}
+      echo "Topic '{{ .name }}' created successfully."
+    else
+      echo "Topic '{{ .name }}' already exists. Skipping creation."
+    fi
     {{- end }}

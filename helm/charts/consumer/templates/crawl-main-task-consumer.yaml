@@ -6,6 +6,8 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   replicas: {{ .Values.mainConsumer.replicas }}
+  strategy:
+    type: {{ .Values.strategy.type | default "RollingUpdate" }}
   selector:
     matchLabels:
       app: main-crawl-{{ .Chart.Name }}
@@ -14,6 +16,15 @@ spec:
       labels:
         app: main-crawl-{{ .Chart.Name }}
     spec:
+      # 컨테이너 구동 시 토픽 생성 (overwrite x)
+      initContainers:
+      - name: init-create-topics
+        image: "{{ .Values.mainConsumer.image.repository }}:{{ .Values.mainConsumer.image.tag }}"
+        imagePullPolicy: {{ .Values.mainConsumer.image.pullPolicy }}
+        command: [ "/bin/bash", "/scripts/create-topics.sh" ]
+        volumeMounts:
+          - name: init-scripts
+            mountPath: /scripts
       containers:
       - name: main-crawl-{{ .Chart.Name }}
         image: "{{ .Values.mainConsumer.image.repository }}:{{ .Values.mainConsumer.image.tag }}"
@@ -32,6 +43,9 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
       volumes:  # 로컬 볼륨 마운트이므로 로컬 노드에서만 사용 가능. ebs의 경우 별도 방식
+      - name: init-scripts
+        configMap:
+          name: {{ .Chart.Name }}-config
       {{- with .Values.volumes }}
       {{- toYaml . | nindent 6 }}
       {{- end }}

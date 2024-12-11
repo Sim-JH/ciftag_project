@@ -33,6 +33,8 @@ volumeMounts:
     name: datadrive
   - mountPath: /src/module/ciftag
     name: module-code
+  - mountPath: /src/module/logs
+    name: module-logs
 
 volumes:
   - name: datadrive
@@ -41,6 +43,9 @@ volumes:
   - name: module-code
     hostPath:
       path: /mnt/c/my_project/ciftag_project/ciftag
+  - name: module-logs
+    hostPath:
+      path: /mnt/c/my_project/ciftag_project/logs
 
 ingress:
   enabled: true

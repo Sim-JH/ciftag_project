@@ -8,6 +8,13 @@ topics:
   - name: "sub_crawl_task_topic"
     partitions: 100
     replicationFactor: 1
+  - name: "agt_crawl_task_topic"
+    partitions: 5
+    replicationFactor: 1
+
+# Upgrade 시 ReplicaSet 삭제후 생성
+strategy:
+  type: Recreate
 
 mainConsumer:
   enabled: true
@@ -65,6 +72,8 @@ volumeMounts:
     name: datadrive
   - mountPath: /src/module/ciftag
     name: module-code
+  - mountPath: /src/module/logs
+    name: module-logs
 
 volumes:
   - name: datadrive
@@ -73,9 +82,16 @@ volumes:
   - name: module-code
     hostPath:
       path: /mnt/c/my_project/ciftag_project/ciftag
+  - name: module-logs
+    hostPath:
+      path: /mnt/c/my_project/ciftag_project/logs
 
 env:
   - name: RUN_ON
     value: local
   - name: SERVER_TYPE
     value: dev
+  - name: POD_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.name
