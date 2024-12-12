@@ -37,7 +37,7 @@ class EnvKeys:
         self.KAFKA_SUB_CRAWL_TOPIC: str = os.getenv("KAFKA_SUB_CRAWL_TOPIC", "sub_crawl_task_topic")
         self.KAFKA_SUB_CRAWL_DLQ: str = os.getenv("KAFKA_SUB_CRAWL_DLQ", "sub_crawl_task_dlq")
         self.KAFKA_SUB_CRAWL_RETRY_TOPIC: str = os.getenv("KAFKA_SUB_CRAWL_RETRY_TOPIC", "sub_crawl_retry_task_topic")
-        self.KAFKA_AGGREGATE_CRAWL_TOPIC: str = os.getenv("KAFKA_AGGREGATE_CRAWL_TOPIC", "aggregate_crawl_task_topic")
+        self.KAFKA_AGGREGATE_CRAWL_TOPIC: str = os.getenv("KAFKA_AGGREGATE_CRAWL_TOPIC", "agt_crawl_task_topic")
         # endregion
 
         # elasticsearch 관련
