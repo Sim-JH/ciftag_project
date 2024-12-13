@@ -64,7 +64,6 @@ def main_crawl_interface():
             try:
                 # 메세지 batch get
                 messages = consumer.poll(timeout_ms=1000)
-                logs.log_data(f"Messages polled: {len(messages)}")
                 # poll의 경우 메세지가 없다면 빈 배열 반환
                 if not messages:
                     time.sleep(1)
@@ -81,6 +80,8 @@ def main_crawl_interface():
                     consumer.close()
                     producer.close()
                     exit()
+            except Exception as e:
+                logs.log_data(f"UnExpect Exception get messages: {e}")
         else:
             # 재시도 횟수 초과 시까지 메세지를 가져오지 못할 경우
             logs.log_data(f"There are no messages in topics")
@@ -88,8 +89,11 @@ def main_crawl_interface():
             continue
 
         for topic_partition, records in messages.items():
+            # 메세지 정보
+            logs.log_data(f"Topic Partition: {topic_partition}")
+            logs.log_data(f"Records: {records}")
             for message in records:
-                task_body = json.loads(message.value)
+                task_body = json.loads(message.value.decode('utf-8')).get('task_body')
                 logs.log_data(task_body)
                 task_body['retry'] = int(task_body.get('retry', 0)) + 1
                 work_id = task_body['work_id']
@@ -105,22 +109,17 @@ def main_crawl_interface():
                     'start_dt': datetime.now(TIMEZONE)
                 }
 
-                # 내부 작업 로그 insert
-                task_id = insert_task_status(task_meta)
-
-                # 집계용 키
-                agt_key = f"work_id:{work_id}"
-                # 시작 시간 설정 (해당 키에 값이 없을 경우)
-                redis_m.set_nx(work_id, 'created_at', task_meta['start_dt'])
-                # 해당 work_id에 대한 task cnt 증가
-                redis_m.incrby_key(agt_key, "total_tasks")
-                redis_m.incrby_key(agt_key, "task_goal", amount=task_body['goal_cnt'])
-
-                # 메세지 정보
-                logs.log_data(f"Message info - partition: {message.partition}, offset: {message.offset}")
-                logs.log_data(f"Processing task: {task_body}")
-
                 try:
+                    # 내부 작업 로그 insert
+                    task_id = insert_task_status(task_meta)
+                    # 집계용 키
+                    agt_key = f"work_id:{work_id}"
+                    # 시작 시간 설정 (해당 키에 값이 없을 경우)
+                    redis_m.set_nx(work_id, 'created_at', task_meta['start_dt'].strftime('%Y-%m-%d %H:%M:%S'))
+                    # 해당 work_id에 대한 task cnt 증가
+                    redis_m.incrby_key(agt_key, "total_tasks")
+                    redis_m.incrby_key(agt_key, "task_goal", amount=task_body['goal_cnt'])
+
                     # 타이머 시작
                     signal.alarm(env_key.TASK_TIME_OUT)
 
@@ -131,7 +130,7 @@ def main_crawl_interface():
                         cred_info=task_body['cred_info'],
                         runner_identify=runner_identify,
                         goal_cnt=task_body['goal_cnt'],
-                        data=task_body,
+                        data=task_body['data'],
                         redis_name=task_body['redis_name'],
                     )
 
