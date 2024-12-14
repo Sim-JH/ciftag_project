@@ -93,23 +93,22 @@ def main_crawl_interface():
             logs.log_data(f"Topic Partition: {topic_partition}")
             logs.log_data(f"Records: {records}")
             for message in records:
-                task_body = json.loads(message.value.decode('utf-8')).get('task_body')
-                logs.log_data(task_body)
-                task_body['retry'] = int(task_body.get('retry', 0)) + 1
-                work_id = task_body['work_id']
-                info_id = task_body['info_id']
-
-                task_meta = {
-                    'work_pk': work_id,
-                    'runner_identify': runner_identify,
-                    'body': json.dumps(task_body, ensure_ascii=False),
-                    'task_sta': enums.TaskStatusCode.load.name,  # sql 상에선 string으로 들어가야 함
-                    'get_cnt': 0,
-                    'goal_cnt': task_body['goal_cnt'],
-                    'start_dt': datetime.now(TIMEZONE)
-                }
-
                 try:
+                    task_body = json.loads(message.value.decode('utf-8')).get('task_body')
+                    task_body['retry'] = int(task_body.get('retry', 0)) + 1
+                    work_id = task_body['work_id']
+                    info_id = task_body['info_id']
+
+                    task_meta = {
+                        'work_pk': work_id,
+                        'runner_identify': runner_identify,
+                        'body': json.dumps(task_body['data'], ensure_ascii=False),
+                        'task_sta': enums.TaskStatusCode.load.name,  # sql 상에선 string으로 들어가야 함
+                        'get_cnt': 0,
+                        'goal_cnt': task_body['goal_cnt'],
+                        'start_dt': datetime.now(TIMEZONE)
+                    }
+
                     # 내부 작업 로그 insert
                     task_id = insert_task_status(task_meta)
                     # 집계용 키
@@ -125,6 +124,7 @@ def main_crawl_interface():
 
                     # 섬네일 크롤링 수행
                     # TODO 추후 target 별 배분
+                    logs.log_data(f"Pinterest Crawl Run: task_id-{task_id} goal_cnt-{task_body['goal_cnt']}")
                     result = pinterest.run(
                         task_id=task_id,
                         cred_info=task_body['cred_info'],
@@ -164,7 +164,7 @@ def main_crawl_interface():
                             'work_id': work_id,
                             'task_id': task_id,
                             'info_id': info_id,
-                            'data': task_body
+                            'data': task_body['data']
                         }
 
                         # 해당 work_id에 대한 task complete cnt 증가
@@ -172,6 +172,7 @@ def main_crawl_interface():
                         redis_m.incrby_key(agt_key, "task_get", amount=len(result['pins']))
 
                         # sub topic으로 send
+                        logs.log_data(f"Task-{task_id} send sub crawl chunks: {chunks}")
                         for chunk in chunks:
                             message.update({'goal_cnt': len(chunk)})
                             producer.send(env_key.KAFKA_SUB_CRAWL_TOPIC, message).get(timeout=10)

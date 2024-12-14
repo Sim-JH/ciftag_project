@@ -20,7 +20,7 @@ spec:
       initContainers:
       - name: init-create-topics
         image: "{{ .Values.subConsumer.image.repository }}:{{ .Values.subConsumer.image.tag }}"
-        imagePullPolicy: {{ .Values.mainConsumer.image.pullPolicy }}
+        imagePullPolicy: {{ .Values.subConsumer.image.pullPolicy }}
         command: [ "/bin/bash", "/scripts/create-topics.sh" ]
         volumeMounts:
           - name: init-scripts

@@ -54,8 +54,16 @@ class CrawlTriggerDispatcher:
         return result
 
     def _trigger_local(self, task_body):
-        # celery worker run
+        # kafka message send
         segments = self._cal_segment(task_cnt=env_key.MAIN_CRAWL_PARTISION)
+        results = []
+
+        # 콜백을 이용해 메시지 전송 결과 확인
+        def on_success(record_metadata):
+            results.append({'status': 'success', 'partition': record_metadata.partition, 'offset': record_metadata.offset})
+
+        def on_error(exception):
+            results.append({'status': 'error', 'error': str(exception)})
 
         # 라운드 로빈으로 작업 배분
         for idx, goal_cnt in enumerate(segments):
@@ -68,9 +76,12 @@ class CrawlTriggerDispatcher:
             self.kafka_producer.send(
                 self.kafka_main_topic,
                 message
-            )
+            ).add_callback(on_success).add_errback(on_error)
 
         self.kafka_producer.flush()
+
+        for result in results:
+            logs.log_data(f'message send result: {result}')
 
     def _trigger_aws(self, task_body):
         # sqs put & git action trigger

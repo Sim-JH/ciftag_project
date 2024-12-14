@@ -90,6 +90,7 @@ class CiftagParser:
         """,
         )
         self.parser.add_argument("command", help="Subcommand to run")
+
     def celery(self):
         """데이터베이스 관련 명령어 처리"""
         parser = argparse.ArgumentParser(
