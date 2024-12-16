@@ -2,7 +2,7 @@ import os
 import time
 import random
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from playwright.sync_api import sync_playwright
 
@@ -26,6 +26,7 @@ def run(
         info_id: int,
         runner_identify: str,
         data: Dict[str, Any],
+        pins: List[str],
         headless: bool = True
 ):
     """ 핀터레스트 크롤링 서브 타스크
@@ -33,6 +34,7 @@ def run(
     :param info_id: 수행 정보 ID
     :param runner_identify: 처리기 식별자
     :param data: 메타 데이터
+    :param pins: 원본 페이지 url
     :param headless: 헤드리스 모드 여부
     """
     time.sleep(random.randrange(1, 10))
@@ -41,7 +43,6 @@ def run(
     logs.log_data(f'--- 작업 시작 task id: {sub_task_id}')
 
     run_on = data['run_on']
-    pins = data['pins']
 
     # 이미지 크기 범위 지정 시
     min_width = int(data['min_width']) if int(data.get('min_width')) else None

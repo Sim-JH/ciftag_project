@@ -119,7 +119,7 @@ def insert_sub_task_status(args: Dict[str, Any]):
 
     args.update(
         {
-            'task_pk': sub_task_id,
+            'sub_task_pk': sub_task_id,
             'created_at': datetime.now(TIMEZONE)
         }
     )
@@ -147,7 +147,7 @@ def update_sub_task_status(sub_task_id: int, args: Dict[str, Any]):
     _, task_row = save_sql(task_sql, args=args, returning=True)
 
     task_row_dict = {
-        'sub_task_id': task_row[0],
+        'sub_task_pk': task_row[0],
         'task_pk': task_row[1],
         'runner_identify': task_row[2],
         'task_sta': task_row[3],
@@ -160,8 +160,8 @@ def update_sub_task_status(sub_task_id: int, args: Dict[str, Any]):
         'created_at': datetime.now(TIMEZONE)
     }
 
-    task_h_sql = f"""INSERT INTO sub_task_info_hist (sub_task_pk, work_pk, task_pk, runner_identify, task_sta, get_cnt, goal_cnt, msg, traceback, start_dt, end_dt, created_at) 
-                          VALUES(:sub_task_pk, :work_pk, :task_pk, :runner_identify, :task_sta, :get_cnt, :goal_cnt, :msg, :traceback, :start_dt, :end_dt, :created_at)"""
+    task_h_sql = f"""INSERT INTO sub_task_info_hist (sub_task_pk, task_pk, runner_identify, task_sta, get_cnt, goal_cnt, msg, traceback, start_dt, end_dt, created_at) 
+                          VALUES(:sub_task_pk, :task_pk, :runner_identify, :task_sta, :get_cnt, :goal_cnt, :msg, :traceback, :start_dt, :end_dt, :created_at)"""
 
     save_sql(task_h_sql, args=task_row_dict)
 

@@ -164,7 +164,9 @@ def main_crawl_interface():
                             'work_id': work_id,
                             'task_id': task_id,
                             'info_id': info_id,
-                            'data': task_body['data']
+                            'data': task_body['data'],
+                            'redis_name': task_body['redis_name'],
+                            'target': 'pinterest'  # 마찬가지로 target 동적으로 지정
                         }
 
                         # 해당 work_id에 대한 task complete cnt 증가
@@ -172,10 +174,13 @@ def main_crawl_interface():
                         redis_m.incrby_key(agt_key, "task_get", amount=len(result['pins']))
 
                         # sub topic으로 send
-                        logs.log_data(f"Task-{task_id} send sub crawl chunks: {chunks}")
+                        chunk_cnt = 0
                         for chunk in chunks:
-                            message.update({'goal_cnt': len(chunk)})
+                            message.update({'goal_cnt': len(chunk), 'pins': chunk})
                             producer.send(env_key.KAFKA_SUB_CRAWL_TOPIC, message).get(timeout=10)
+                            chunk_cnt += 1
+
+                        logs.log_data(f"Task-{task_id} send sub crawl chunks: {chunk_cnt}")
 
                     # topic 전송 실패
                     except KafkaError as e:
