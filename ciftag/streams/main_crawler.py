@@ -114,7 +114,7 @@ def main_crawl_interface():
                     # 집계용 키
                     agt_key = f"work_id:{work_id}"
                     # 시작 시간 설정 (해당 키에 값이 없을 경우)
-                    redis_m.set_nx(work_id, 'created_at', task_meta['start_dt'].strftime('%Y-%m-%d %H:%M:%S'))
+                    redis_m.set_nx(agt_key, 'created_at', task_meta['start_dt'].strftime('%Y-%m-%d %H:%M:%S'))
                     # 해당 work_id에 대한 task cnt 증가
                     redis_m.incrby_key(agt_key, "total_tasks")
                     redis_m.incrby_key(agt_key, "task_goal", amount=task_body['goal_cnt'])
