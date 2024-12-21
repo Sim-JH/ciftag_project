@@ -14,7 +14,7 @@ spec:
   metrics:
   - type: Resource
     resource:
-      name: cpu
+      name: cpu  # TODO 메세지 수 기반으로 변경
       target:
         type: Utilization
         averageUtilization: 80
