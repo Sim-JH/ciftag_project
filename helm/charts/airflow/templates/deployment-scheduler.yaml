@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-sch
+  labels:
+    app: {{ .Chart.Name }}-sch
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}-sch
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}-sch
+    spec:
+      containers:
+      - name: airflow-webserver
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        envFrom:
+        - secretRef:
+            name: {{ .Release.Name }}-secrets
+        env:
+        {{- range .Values.env }}
+          - name: {{ .name }}
+            value: "{{ .value }}"
+        {{- end }}
+        ports:
+          - containerPort: 8080
+        command: ["/bin/bash", "-c", "airflow scheduler"]
+        volumeMounts:
+        {{- with .Values.volumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      volumes:
+      {{- with .Values.volumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}

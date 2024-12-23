@@ -1,0 +1,79 @@
+replicaCount: 1
+
+image:
+  repository: ciftag-airflow
+  tag: latest
+  pullPolicy: Never
+
+service:
+  web:
+    type: NodePort
+    port: 8080
+    targetPort: 8080
+    nodePort: 32000
+  scheduler:
+    type: ClusterIP
+    port: 8793
+    targetPort: 8793
+    enabled: true
+
+healthcheck:
+  webserver:
+    initialDelaySeconds: 40
+    periodSeconds: 30
+    timeoutSeconds: 10
+    successThreshold: 1
+    failureThreshold: 3
+
+env:
+  - name: AIRFLOW__CORE__EXECUTOR
+    value: "CeleryExecutor"
+  - name: AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION
+    value: "True"
+  - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
+    value: "postgresql+psycopg2://admin:ciftag@ciftag-postgres-svc.ciftag.svc.cluster.local:5432/airflow"
+  - name: AIRFLOW_ADMIN_USERNAME
+    value: "admin"
+  - name: AIRFLOW_ADMIN_FIRSTNAME
+    value: "jh"
+  - name: AIRFLOW_ADMIN_LASTNAME
+    value: "sim"
+  - name: AIRFLOW_ADMIN_EMAIL
+    value: "saide0032@gmail.com"
+  - name: AIRFLOW__CELERY__BROKER_URL
+    value: "redis://ciftag-redis-svc:6379/0"
+  - name: AIRFLOW__CELERY__RESULT_BACKEND
+    value: "db+postgresql://admin:ciftag@ciftag-postgres-svc.ciftag.svc.cluster.local:5432/airflow"
+  - name: AIRFLOW__CORE__LOAD_EXAMPLES
+    value: "False"
+  - name: AIRFLOW__WEBSERVER__WORKERS
+    value: "4"
+
+postgresql:
+  enabled: true
+  username: admin
+  password: ciftag
+  database: airflow
+
+redis:
+  enabled: true
+  password: ""
+
+volumeMounts:
+  - mountPath: /opt/airflow/dags
+    name: dags
+  - mountPath: /opt/airflow/scripts
+    name: scripts
+  - mountPath: /opt/airflow/logs
+    name: logs
+
+volumes:
+  - name: dags
+    hostPath:
+      path: /mnt/c/my_project/ciftag_project/airflow/dags
+  - name: scripts
+    hostPath:
+      path: /mnt/c/my_project/ciftag_project/airflow/scripts
+  - name: logs
+    hostPath:
+      path: /mnt/c/my_project/ciftag_project/airflow/logs

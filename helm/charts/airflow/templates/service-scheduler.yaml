@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-sch-svc
+  labels:
+    app: {{ .Chart.Name }}-sch
+spec:
+  type: {{ .Values.service.scheduler.type }}
+  ports:
+    - port: {{ .Values.service.scheduler.port }}
+      targetPort: {{ .Values.service.scheduler.targetPort }}
+      nodePort: {{ .Values.service.scheduler.nodePort }}
+  selector:
+    app: {{ .Chart.Name }}-sch
