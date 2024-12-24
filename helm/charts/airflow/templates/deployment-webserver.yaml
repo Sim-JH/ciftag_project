@@ -29,6 +29,7 @@ spec:
         ports:
           - containerPort: 8080
         command: ["/bin/bash", "-c", "airflow webserver"]
+#        command: ["/bin/bash", "-c", "airflow db init"]
         volumeMounts:
         {{- with .Values.volumeMounts }}
         {{- toYaml . | nindent 8 }}

@@ -134,7 +134,7 @@ def aggregate_interface():
                         else:
                             # 작업 진행중 처리
                             logs.log_data(
-                                f"Work {work_id} is progress task {main_task_total}-{main_task_complete}:{main_task_failed}\n"
+                                f"Work {work_id} is progress task {main_task_total}-{main_task_complete}:{main_task_failed} "
                                 f"sub task {sub_task_total}-{sub_task_complete}:{sub_task_failed}"
                             )
                             continue

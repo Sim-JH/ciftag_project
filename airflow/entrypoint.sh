@@ -20,10 +20,10 @@ airflow connections add 'aws_rds_connection' \
     --conn-uri 'postgresql://admin:ciftag@ciftag-db.cr0068guyz3r.ap-northeast-2.rds.amazonaws.com:5432/ciftag'
 
 airflow connections add 'main_postgresql_dev_connection' \
-    --conn-uri 'postgresql://admin:ciftag@ciftag-postgres:5432/dev'
+    --conn-uri 'postgresql://admin:ciftag@ciftag-postgres-svc.ciftag:5432/dev'
 
 airflow connections add 'main_dev_server_connection' \
-    --conn-uri 'http://ciftag-dev-module:5000'
+    --conn-uri 'http://ciftag-api-module-svc.ciftag:5000'
 
 # Set Airflow Variable for base_script_path
 airflow variables set base_script_path "/opt/airflow/scripts"

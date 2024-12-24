@@ -41,7 +41,7 @@ env:
   - name: AIRFLOW_ADMIN_EMAIL
     value: "saide0032@gmail.com"
   - name: AIRFLOW__CELERY__BROKER_URL
-    value: "redis://ciftag-redis-svc:6379/0"
+    value: "redis://ciftag-redis-svc.ciftag:6379/0"
   - name: AIRFLOW__CELERY__RESULT_BACKEND
     value: "db+postgresql://admin:ciftag@ciftag-postgres-svc.ciftag.svc.cluster.local:5432/airflow"
   - name: AIRFLOW__CORE__LOAD_EXAMPLES
