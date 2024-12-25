@@ -33,5 +33,14 @@ echo "Starting Airflow Celery worker..."
 airflow celery worker &
 echo "Airflow Celery worker started."
 
+# Check if the first argument is "scheduler"
+if [ "$1" == "scheduler" ]; then
+    echo "Starting Airflow Scheduler..."
+    airflow scheduler
+else
+    echo "No valid argument provided. Exiting."
+    airflow webserver
+fi
+
 # Continue with the default entrypoint
 exec "$@"

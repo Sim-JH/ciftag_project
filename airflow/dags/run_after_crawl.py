@@ -13,13 +13,16 @@ def generate_info_update_sql_task(**kwargs):
     conf = kwargs.get('dag_run').conf
 
     if conf is None:
-        raise Exception(r"Can't Parse Parameter")
-
-    work_id = conf.get('work_id')
-    info_id = conf.get('info_id')
-    target = conf.get('target')
-    hits = conf.get('hits')
-    elapsed_time = float(conf.get('elapsed_time')) if conf.get('elapsed_time') not in [None, 'None'] else 0
+        raise Exception(r"Can't Parse Body")
+    print(conf)
+    try:
+        work_id = conf['work_id']
+        info_id = conf['info_id']
+        target = conf['target']
+        hits = conf['hits']
+        elapsed_time = float(conf.get('elapsed_time')[0]) if conf.get('elapsed_time') not in [None, 'None'] else 0
+    except Exception as e:
+        raise Exception(rf"Can't Parse Parameter: {e}")
 
     if target == "pinterest":
         target_table = "pint_crawl_info"

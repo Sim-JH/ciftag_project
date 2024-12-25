@@ -28,7 +28,8 @@ spec:
         {{- end }}
         ports:
           - containerPort: 8080
-        command: ["/bin/bash", "-c", "airflow scheduler"]
+        command: ["/entrypoint.sh"]
+        args: [ "scheduler" ]  # 기본 설정 후 셀러리 실행 및 스케줄러 실행
         volumeMounts:
         {{- with .Values.volumeMounts }}
         {{- toYaml . | nindent 8 }}

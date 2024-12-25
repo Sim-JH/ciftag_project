@@ -99,9 +99,9 @@ def aggregate_interface():
                             # 작업 성공 및 후처리
                             redis_m.delete_set_from_redis(work_key)  # 상태 체크 키 삭제
                             redis_m.delete_set_from_redis(message.get("redis_dup_key"))  # 중복 체크 키 삭제
-                            elapsed_time = datetime.now(TIMEZONE) - datetime.strptime(
+                            elapsed_time = (datetime.now(TIMEZONE) - datetime.strptime(
                                 task_status.get('created_at'), '%Y-%m-%d %H:%M:%S'
-                            ).replace(tzinfo=TIMEZONE),  # 캐시 유지 시간 기반 소모 시간 측정
+                            ).replace(tzinfo=TIMEZONE)).total_seconds()  # 캐시 유지 시간 기반 소모 시간 측정
 
                             airflow_param = {
                                 'work_id': work_id,
