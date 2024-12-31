@@ -68,11 +68,13 @@ def run_consumer(args):
         aggregate_crawl
     )
     if args.consumer_type == "main":
-        main_crawler.main_crawl_interface()
+        runner = main_crawler.MainCrawlConsumer()
     elif args.consumer_type == "sub":
-        sub_crawler.sub_crawl_interface(args.task_type)
+        runner = sub_crawler.SubCrawlConsumer(task_type=args.task_type)
     else:
-        aggregate_crawl.aggregate_interface()
+        runner = aggregate_crawl.AggregateConsumer()
+
+    runner.run()
 
 
 class CiftagParser:

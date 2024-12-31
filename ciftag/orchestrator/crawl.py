@@ -69,9 +69,7 @@ class CrawlTriggerDispatcher:
         for idx, goal_cnt in enumerate(segments):
             task_body.update({'goal_cnt': int(goal_cnt)})
 
-            message = {
-                'task_body': task_body,
-            }
+            message = task_body
 
             self.kafka_producer.send(
                 self.kafka_main_topic,
