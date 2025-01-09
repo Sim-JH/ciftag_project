@@ -66,7 +66,6 @@ def run(
         ciftag_crypto.load_key(crypto_key.encode())
         cred_pw = ciftag_crypto.decrypt_text(cred_pw)
 
-    # TODO proxy setting
     proxy_settings = {}
     api_proxies = {}
 

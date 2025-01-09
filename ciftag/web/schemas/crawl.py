@@ -13,7 +13,7 @@ class CrawlBase(BaseModel):
         title="크롤링 대상 사이트 코드",
         description="크롤링 대상 사이트 코드의 값은 다음과 같습니다: "
                     + ", ".join([f"{e.name}: {e.value}" for e in enums.CrawlTargetCode])
-    )  # TODO 추후에는 복수의 target에 대해 요청이 가능하도록
+    )
     run_on: enums.RunOnCode = Field(
         "0",
         title="실행 환경 코드",

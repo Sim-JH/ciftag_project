@@ -30,7 +30,6 @@ class ImageDescriber:
         # 선택한 모델 초기화
         self.model, self.processor = self.initialize_model()
 
-        # TODO 아래 후처리 LLM은 허깅페이스 무료 모델을 쓰지만 GPT API로 GPT4 쓰는게 더 훨씬 나을듯
         # 번역 파이프라인 초기화
         # 버전문제로 tf 대신 pytorch 사용
         # (영어 -> 한글 번역) !성능 이슈

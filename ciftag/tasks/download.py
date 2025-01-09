@@ -28,7 +28,6 @@ from ciftag.models import (
 logs = logger.Logger(log_dir='Download')
 
 
-# TODO DB 로깅 추가
 @app.task(bind=True, name="ciftag.task.download_images_by_target", max_retries=3)
 def download_images_by_target(self, target, records, success_list=None, api_proxies=None, ext='png'):
     """requests 기반 타겟별 이미지 다운로드. 재시도 최대 3회
@@ -131,7 +130,7 @@ def download_images_by_target(self, target, records, success_list=None, api_prox
         'path'
     )
 
-    # 이미지 메타 쓰기 & 엘리스틱 서치 색인 (TODO: 추후 API단에서 CRUD 데이터 동기화 이뤄져야함)
+    # 이미지 메타 쓰기 & 엘리스틱 서치 색인
     es_m = ESManager()
     for data_idx, description in img_decs:
         body = {

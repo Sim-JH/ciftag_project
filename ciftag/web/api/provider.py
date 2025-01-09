@@ -38,9 +38,3 @@ async def provide_face_crop_image(
 
     # 파일 스트리밍하여 반환
     return FileResponse(path=zip_path, filename=os.path.basename(zip_path), media_type='application/zip')
-
-
-# TODO download 되어있는 것 중 필터링 후 다운로드
-# TODO 필터링 매칭 테이블 만들고 data 이미지가 어떤 필터링을 통과했는지 기록. 해당 사항을 기반으로 원하는 필터링 통과한 이미지 제공
-    # 이 떄 통과한 쓰레쉬 홀드도 같이 포함되어야함
-

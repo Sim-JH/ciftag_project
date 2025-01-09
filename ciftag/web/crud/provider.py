@@ -69,7 +69,6 @@ def provide_face_crop_image_service(target_code: str, start_idx: int, end_idx: i
         output_image = face_cropper.detect_and_crop(img_path)
 
         if output_image is None or output_image.size == 0:
-            # TODO 실패한 경우 해당 DB에서 해당 이미지에 대한 상태 업데이트
             continue
 
         if resize:
