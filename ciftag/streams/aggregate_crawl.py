@@ -3,7 +3,7 @@ from typing import List, Dict, Any
 from datetime import datetime
 
 from ciftag.settings import TIMEZONE, env_key
-from ciftag.streams.interface import CrawlConsumerBase
+from ciftag.streams.crawler_interface import CrawlConsumerBase
 
 
 class AggregateConsumer(CrawlConsumerBase):
@@ -45,8 +45,8 @@ class AggregateConsumer(CrawlConsumerBase):
                     self._finalize_work(work_id, message, task_status)
                 else:
                     self.logs.log_data(
-                        f"Work {work_id} is still in progress: {main_task_total}-{main_task_complete}:{main_task_failed} "
-                        f"sub task {sub_task_total}-{sub_task_complete}:{sub_task_failed}"
+                        f"Work {work_id} is still in progress: total-{main_task_total}[complete-{main_task_complete}/failed-{main_task_failed}]"
+                        f"sub task: total-{sub_task_total}[complete-{sub_task_complete}/failed-{sub_task_failed}]"
                     )
 
             except Exception as e:

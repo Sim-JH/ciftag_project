@@ -6,7 +6,6 @@ import argparse
 import sqlalchemy
 
 import ciftag.utils.logger as logger
-import ciftag.fargate.run as fargate_crawl
 from ciftag.utils import bootstrap
 from ciftag.configuration import conf
 
@@ -51,6 +50,7 @@ def start_api_server(args):
 
 
 def run_crawler(args):
+    import ciftag.fargate.run as fargate_crawl
     if args.run_type == "test":
         container_start_time = time.time()
         while True:

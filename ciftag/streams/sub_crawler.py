@@ -10,7 +10,7 @@ from ciftag.models import enums
 from ciftag.settings import TIMEZONE, SERVER_TYPE, env_key
 from ciftag.utils.converter import get_traceback_str
 from ciftag.scripts.common import insert_sub_task_status, update_sub_task_status
-from ciftag.streams.interface import CrawlConsumerBase
+from ciftag.streams.crawler_interface import CrawlConsumerBase
 
 
 class SubCrawlConsumer(CrawlConsumerBase):

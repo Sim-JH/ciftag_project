@@ -10,7 +10,7 @@ from ciftag.models import enums
 from ciftag.settings import TIMEZONE, env_key
 from ciftag.utils.converter import get_traceback_str
 from ciftag.scripts.common import insert_task_status, update_task_status
-from ciftag.streams.interface import CrawlConsumerBase
+from ciftag.streams.crawler_interface import CrawlConsumerBase
 
 
 class MainCrawlConsumer(CrawlConsumerBase):
@@ -52,13 +52,15 @@ class MainCrawlConsumer(CrawlConsumerBase):
                 'target': 'pinterest',  # 마찬가지로 target 동적으로 지정
             }
 
+            self.logs.log_data(f"Task-{task_id} start send message to sub crawler")
+
             chunk_cnt = 0
             for chunk in chunks:
                 sub_message.update({'goal_cnt': len(chunk), 'pins': chunk})
                 self.producer.send(env_key.KAFKA_SUB_CRAWL_TOPIC, sub_message).get(timeout=10)
                 chunk_cnt += 1
 
-            self.logs.log_data(f"Task-{task_id} send sub crawl chunks: {chunk_cnt}")
+            self.logs.log_data(f"Task-{task_id} send sub crawler chunks: {chunk_cnt}")
 
             # 해당 work_id에 대한 task complete cnt 증가
             self.redis.incrby_key(agt_key, "task_complete")

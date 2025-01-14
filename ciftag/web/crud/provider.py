@@ -1,7 +1,6 @@
 import os
 import cv2
 from ciftag.configuration import conf
-from ciftag.ml.detect_face import FaceCropper
 
 from sqlalchemy import union, between
 
@@ -19,6 +18,8 @@ from ciftag.models import (
 
 
 def provide_face_crop_image_service(target_code: str, start_idx: int, end_idx: int, resize: int):
+    from ciftag.ml.detect_face import FaceCropper  # 모델 관련 패키지 지연로딩
+
     if target_code == "1":
         info_model = PinterestCrawlInfo
         data_model = PinterestCrawlData
