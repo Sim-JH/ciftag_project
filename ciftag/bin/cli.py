@@ -62,7 +62,7 @@ def run_crawler(args):
 
 
 def run_consumer(args):
-    from ciftag.streams import (
+    from ciftag.streams.crawler import (
         main_crawler,
         sub_crawler,
         aggregate_crawl

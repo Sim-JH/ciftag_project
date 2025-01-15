@@ -38,6 +38,8 @@ class EnvKeys:
         self.KAFKA_SUB_CRAWL_DLQ: str = os.getenv("KAFKA_SUB_CRAWL_DLQ", "sub_crawl_task_dlq")
         self.KAFKA_SUB_CRAWL_RETRY_TOPIC: str = os.getenv("KAFKA_SUB_CRAWL_RETRY_TOPIC", "sub_crawl_retry_task_topic")
         self.KAFKA_AGGREGATE_CRAWL_TOPIC: str = os.getenv("KAFKA_AGGREGATE_CRAWL_TOPIC", "agt_crawl_task_topic")
+        self.KAFKA_IMAGE_DOWNLOADER_TOPIC: str = os.getenv("KAFKA_IMAGE_DOWNLOADER_TOPIC", "img_downloader_topic")
+        self.KAFKA_SAMPLE_IMAGE_FILTER_TOPIC: str = os.getenv("KAFKA_SAMPLE_IMAGE_FILTER_TOPIC", "sample_img_filter_topic")
         # endregion
 
         # elasticsearch 관련
@@ -68,5 +70,6 @@ class EnvKeys:
         # self.CELERY_WORKER: int = os.getenv("CELERY_WORKER", 10)
         self.MAIN_CRAWL_PARTISION: int = os.getenv("MAIN_CRAWL_PARTISION", 10)
         self.SUB_CRAWL_PARTISION: int = os.getenv("SUB_CRAWL_PARTISION", 100)
+        self.DOWNLOADER_PARTISION: int = os.getenv("DOWNLOADER_PARTISION", 10)
         self.AGGREGATE_CRAWL_PARTISION: int = os.getenv("AGGREGATE_CRAWL_PARTISION", 5)
         self.ECS_WORKER: int = os.getenv("ECS_WORKER", 10)

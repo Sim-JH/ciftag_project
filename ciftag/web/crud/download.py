@@ -1,11 +1,13 @@
-import zipfile
-from typing import List, Optional
+import json
+from typing import List, Dict, Any
 
 from sqlalchemy import union, between
+from kafka import KafkaProducer
 
+from ciftag.settings import env_key
 from ciftag.exceptions import CiftagAPIException
 from ciftag.integrations.database import DBManager
-from ciftag.celery_app import app
+from ciftag.web.crud.common import insert_work_status
 from ciftag.models import (
     PinterestCrawlInfo,
     PinterestCrawlData,
@@ -18,71 +20,82 @@ from ciftag.models import (
 )
 
 
-def download_image_from_url_service(target_code: str, request):
-    request = request.dict()
-    data_pk_list = request.get('data_pk_list')
-
-    if target_code == "1":
-        info_model = PinterestCrawlInfo
-        data_model = PinterestCrawlData
-        join_key = PinterestCrawlData.pint_pk
-        target = "Pinterest"
-    elif target_code == "2":
-        info_model = TumblrCrawlInfo
-        data_model = TumblrCrawlData
-        join_key = TumblrCrawlData.tumb_pk
-        target = "Tumblr"
-    elif target_code == "3":
-        info_model = FlickrCrawlInfo
-        data_model = FlickrCrawlData
-        join_key = FlickrCrawlData.flk_pk
-        target = "Flickr"
-    else:
-        raise CiftagAPIException('Target Not Exist', 404)
-
-    dbm = DBManager()
-
-    # tag + url 가져오기
-    with (dbm.create_session() as session):
-        query = session.query(
-            info_model.id.label("info_id"),
-            info_model.tags,
-            data_model.id.label("data_id"),
-            data_model.title,
-            data_model.image_url,
-        ).join(
-            data_model, info_model.id == join_key
-        )
-
-        if len(data_pk_list):
-            query = query.filter(
-                data_model.id.in_(data_pk_list)
-            )
-
-        # records = query.order_by(data_model.id).limit(100).all()
-        records = query.order_by(data_model.id).all()
-
-    # orm -> dict
-    records = [dict(record._mapping) for record in records]
-
-    # celery run
-    download_img_s = app.signature(
-        "ciftag.task.download_images_by_target",
-        kwargs={
-            'target': target,
-            'records': records,
-        }
+def send_massage_to_topic(topic: str, messages: List[Dict[str, str]], headers=None):
+    # Kafka 메세지 전송
+    kafka_producer = KafkaProducer(
+        bootstrap_servers=env_key.KAFKA_BOOTSTRAP_SERVERS,
+        value_serializer=lambda v: json.dumps(v).encode('utf-8')
     )
 
-    download_img_s.apply_async()
+    # 낱개 단위 전송, 배치단위 처리
+    for message in messages:
+        kafka_producer.send(
+            topic=topic,
+            value=message,
+            headers=headers
+        )
 
-    return len(records)
+    kafka_producer.flush()
 
+# def download_image_from_url_service(target_code: str, request):
+#     """사이트별 이미지 일괄 다운로드"""
+#     request = request.dict()
+#     data_pk_list = request.get('data_pk_list')
+#
+#     if target_code == "1":
+#         info_model = PinterestCrawlInfo
+#         data_model = PinterestCrawlData
+#         join_key = PinterestCrawlData.pint_pk
+#         target = "Pinterest"
+#     elif target_code == "2":
+#         info_model = TumblrCrawlInfo
+#         data_model = TumblrCrawlData
+#         join_key = TumblrCrawlData.tumb_pk
+#         target = "Tumblr"
+#     elif target_code == "3":
+#         info_model = FlickrCrawlInfo
+#         data_model = FlickrCrawlData
+#         join_key = FlickrCrawlData.flk_pk
+#         target = "Flickr"
+#     else:
+#         raise CiftagAPIException('Target Not Exist', 404)
+#
+#     dbm = DBManager()
+#
+#     # tag + url 가져오기
+#     with (dbm.create_session() as session):
+#         query = session.query(
+#             info_model.id.label("info_id"),
+#             info_model.tags,
+#             data_model.id.label("data_id"),
+#             data_model.title,
+#             data_model.image_url,
+#         ).join(
+#             data_model, info_model.id == join_key
+#         )
+#
+#         if len(data_pk_list):
+#             query = query.filter(
+#                 data_model.id.in_(data_pk_list)
+#             )
+#
+#         # records = query.order_by(data_model.id).limit(100).all()
+#         records = query.order_by(data_model.id).all()
+#
+#     # orm -> dict
+#     records = [dict(record._mapping) for record in records]
+#
+#     # kafka send
+#     send_massage_to_topic(topic=env_key.KAFKA_TARGET_IMAGE_DOWNLOAD_TOPIC, messages=records)
+#
+#     return len(records)
+#
 
 def download_image_by_tags_service(
         tags: List[str], zip_path: str, target_size, threshold: float, model_type: str
 ):
     def apply_size_filter(_query, _data_model, _target_size):
+        # 타겟 이미지 사이즈 범위 조정
         return _query.filter(
             between(
                 _data_model.width,
@@ -171,19 +184,18 @@ def download_image_by_tags_service(
 
         serialized_records.append(record_dict)
 
-    # celery run
-    download_img_tag_s = app.signature(
-        "ciftag.task.download_images_by_tags",
-        kwargs={
-            'tags': "/".join(tags),
-            'zip_path': zip_path,
-            'records': serialized_records,
-            'threshold': threshold,
-            'model_type': model_type,
-        }
-    )
+    work_id = insert_work_status({'work_sta': enums.WorkStatusCode.trigger, 'work_type': enums.WorkTypeCode.download})
 
-    download_img_tag_s.apply_async()
+    # kafka send
+    headers = [
+        ('work_id', work_id),
+        ('zip_path', zip_path),
+        ('threshold', threshold),
+        ('model_type', model_type)
+    ]
+    send_massage_to_topic(
+        topic=env_key.KAFKA_TAG_IMAGE_DOWNLOAD_TOPIC, messages=records, headers=headers
+    )
 
     return len(records)
 

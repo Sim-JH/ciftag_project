@@ -3,7 +3,7 @@ from typing import List, Dict, Any
 from datetime import datetime
 
 from ciftag.settings import TIMEZONE, env_key
-from ciftag.streams.crawler_interface import CrawlConsumerBase
+from ciftag.streams.crawler.crawler_interface import CrawlConsumerBase
 
 
 class AggregateConsumer(CrawlConsumerBase):
