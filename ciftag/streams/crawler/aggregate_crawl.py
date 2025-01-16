@@ -17,6 +17,42 @@ class AggregateConsumer(CrawlConsumerBase):
             max_poll_records=1,
         )
 
+    def _get_task_status(self, agt_key):
+        task_status = self.redis.get_all(agt_key)
+        return {
+            "total_tasks": int(task_status.get("total_tasks", 0)),
+            "task_goal": int(task_status.get("task_goal", 0)),
+            "task_get": int(task_status.get("task_get", 0)),
+            "task_complete": int(task_status.get("task_complete", 0)),
+            "task_failed": int(task_status.get("task_failed", 0)),
+            "total_sub_tasks": int(task_status.get("total_sub_tasks", 0)),
+            "sub_task_goal": int(task_status.get("sub_task_goal", 0)),
+            "sub_task_get": int(task_status.get("sub_task_get", 0)),
+            "sub_task_complete": int(task_status.get("sub_task_complete", 0)),
+            "sub_task_failed": int(task_status.get("sub_task_failed", 0)),
+            "created_at": str(task_status.get("created_at"))
+        }
+    
+    def _finalize_work(self, work_id, message, task_status):
+        """사용한 레디스 키 삭제 및 airflow 트리거"""
+        agt_key = f"work_id:{work_id}"
+        self.redis.delete_set_from_redis(agt_key)  # 상태 체크 키 삭제
+        self.redis.delete_set_from_redis(message.get("redis_dup_key"))  # 중복 체크 키 삭제
+
+        elapsed_time = (datetime.now(TIMEZONE) - datetime.strptime(
+            task_status.get('created_at'), '%Y-%m-%d %H:%M:%S'
+        ).replace(tzinfo=TIMEZONE)).total_seconds()  # 캐시 유지 시간 기반 소모 시간 측정
+
+        airflow_param = {
+            'work_id': work_id,
+            'info_id': message.get('info_id'),
+            'target': message.get('target'),
+            'hits': task_status.get('sub_task_get'),
+            'elapsed_time': str(elapsed_time),
+        }
+
+        self.trigger_airflow(airflow_param)
+
     def process_message(self, message_list: List[Dict[str, Any]]):
         for message in message_list:
             try:
@@ -24,8 +60,8 @@ class AggregateConsumer(CrawlConsumerBase):
 
                 # work_id 기반 작업 정보 캐시 조회
                 work_id = message.get("work_id")
-                work_key = f"work_id:{work_id}"
-                task_status = self.get_task_status(work_key)
+                agt_key = f"work_id:{work_id}"
+                task_status = self._get_task_status(agt_key)
                 self.logs.log_data(f'task_status: {task_status}')
 
                 main_task_total = task_status.get('total_tasks')
@@ -52,26 +88,6 @@ class AggregateConsumer(CrawlConsumerBase):
             except Exception as e:
                 self.logs.log_data(f"Unexpected error processing aggregate message: {e}")
 
-    def _finalize_work(self, work_id, message, task_status):
-        """사용한 레디스 키 삭제 및 airflow 트리거"""
-        work_key = f"work_id:{work_id}"
-        self.redis.delete_set_from_redis(work_key)  # 상태 체크 키 삭제
-        self.redis.delete_set_from_redis(message.get("redis_dup_key"))  # 중복 체크 키 삭제
-
-        elapsed_time = (datetime.now(TIMEZONE) - datetime.strptime(
-            task_status.get('created_at'), '%Y-%m-%d %H:%M:%S'
-        ).replace(tzinfo=TIMEZONE)).total_seconds()  # 캐시 유지 시간 기반 소모 시간 측정
-
-        airflow_param = {
-            'work_id': work_id,
-            'info_id': message.get('info_id'),
-            'target': message.get('target'),
-            'hits': task_status.get('sub_task_get'),
-            'elapsed_time': str(elapsed_time),
-        }
-
-        self.trigger_airflow(airflow_param)
-
     def trigger_airflow(self, params):
         """airflow 후처리 DAG 트리거"""
         try:
@@ -90,19 +106,3 @@ class AggregateConsumer(CrawlConsumerBase):
             self.logs.log_data(f"Triggered Airflow DAG: {response.status_code}")
         except Exception as e:
             self.logs.log_data(f"Failed to trigger Airflow DAG: {e}")
-
-    def get_task_status(self, work_key):
-        task_status = self.redis.get_all(work_key)
-        return {
-            "total_tasks": int(task_status.get("total_tasks", 0)),
-            "task_goal": int(task_status.get("task_goal", 0)),
-            "task_get": int(task_status.get("task_get", 0)),
-            "task_complete": int(task_status.get("task_complete", 0)),
-            "task_failed": int(task_status.get("task_failed", 0)),
-            "total_sub_tasks": int(task_status.get("total_sub_tasks", 0)),
-            "sub_task_goal": int(task_status.get("sub_task_goal", 0)),
-            "sub_task_get": int(task_status.get("sub_task_get", 0)),
-            "sub_task_complete": int(task_status.get("sub_task_complete", 0)),
-            "sub_task_failed": int(task_status.get("sub_task_failed", 0)),
-            "created_at": str(task_status.get("created_at"))
-        }

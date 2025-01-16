@@ -191,10 +191,11 @@ def download_image_by_tags_service(
         ('work_id', work_id),
         ('zip_path', zip_path),
         ('threshold', threshold),
-        ('model_type', model_type)
+        ('model_type', model_type),
+        ('total_cnt', str(len(records)))
     ]
     send_massage_to_topic(
-        topic=env_key.KAFKA_TAG_IMAGE_DOWNLOAD_TOPIC, messages=records, headers=headers
+        topic=env_key.KAFKA_IMAGE_DOWNLOADER_TOPIC, messages=records, headers=headers
     )
 
     return len(records)
