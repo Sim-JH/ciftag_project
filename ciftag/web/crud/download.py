@@ -188,14 +188,16 @@ def download_image_by_tags_service(
 
     # kafka send
     headers = [
-        ('work_id', work_id),
-        ('zip_path', zip_path),
-        ('threshold', threshold),
-        ('model_type', model_type),
-        ('total_cnt', str(len(records)))
+        ('work_id', str(work_id).encode('utf-8')),
+        ('tags', str(tags).encode('utf-8')),
+        ('zip_path', str(zip_path).encode('utf-8')),
+        ('threshold', str(threshold).encode('utf-8')),
+        ('model_type', str(model_type).encode('utf-8')),
+        ('total_cnt', str(len(records)).encode('utf-8'))
     ]
+
     send_massage_to_topic(
-        topic=env_key.KAFKA_IMAGE_DOWNLOADER_TOPIC, messages=records, headers=headers
+        topic=env_key.KAFKA_IMAGE_DOWNLOADER_TOPIC, messages=serialized_records, headers=headers
     )
 
     return len(records)

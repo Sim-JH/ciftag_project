@@ -9,20 +9,20 @@ from ciftag.configuration import conf
 from ciftag.exceptions import CiftagAPIException
 from ciftag.web.schemas.download import DownloadRequestBase
 from ciftag.web.crud.download import (
-    download_image_from_url_service,
+    # download_image_from_url_service,
     download_image_by_tags_service
 )
 
 router = APIRouter()
 
 
-@router.post("/target/{target_code}", response_model=int, responses={200: {"description": "다운로드 대상 이미지 갯수"}})
-def download_image_url(
-    request: DownloadRequestBase,
-    target_code: str = Path(title="대상 사이트 코드"),
-):
-    """data id로부터 이미지 download 및 메타 업데이트"""
-    return download_image_from_url_service(target_code, request)
+# @router.post("/target/{target_code}", response_model=int, responses={200: {"description": "다운로드 대상 이미지 갯수"}})
+# def download_image_url(
+#     request: DownloadRequestBase,
+#     target_code: str = Path(title="대상 사이트 코드"),
+# ):
+#     """data id로부터 이미지 download 및 메타 업데이트"""
+#     return download_image_from_url_service(target_code, request)
 
 
 @router.post("/tags", response_model=int, responses={200: {"description": "다운로드 대상 이미지 갯수"}})

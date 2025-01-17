@@ -19,8 +19,12 @@ def get_origin_url(logs, sub_task_id, pins, page, min_width=None, max_width=None
     # 상태 업로드
     update_sub_task_status(sub_task_id, {'task_sta': enums.TaskStatusCode.parse.name})
     origin_pins = []
+    
+    for pin in pins:
+        title = pin['title']
+        thumbnail_url = pin['thumbnail_url']
+        link = pin['detail_link']
 
-    for title, thumbnail_url, link in pins:
         try:
             # 타임아웃 발생 시 최대 3회 새로고침 시도
             for _ in range(3):
@@ -72,20 +76,27 @@ def get_origin_url(logs, sub_task_id, pins, page, min_width=None, max_width=None
 
             # valid_image_urls에서 최대 너비 이미지 선택 (736x같은 형식으로 표기)
             image_url = max(valid_image_urls, key=get_image_width)
-            # 선정된 이미지의 너비와 높이 파싱 (핀터레스트 url에는 너비만 표시되므로 natural로 파싱)
-            img_dimensions = page.evaluate('''(image_url) => {
-                     return new Promise((resolve, reject) => {
-                         const img = new Image();
-                         img.onload = () => {
-                             resolve({
-                                 width: img.naturalWidth,
-                                 height: img.naturalHeight
-                             });
-                         };
-                         img.onerror = reject;
-                         img.src = image_url;
-                     });
-                 }''', image_url)
+            # 선정된 이미지의 너비와 높이 파싱 (핀터레스트 url에는 너비만 표시되므로 natural로 파싱. 없으면 0, 0)
+            img_dimensions = page.evaluate('''
+                (image_url) => {
+                    return new Promise((resolve, reject) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            resolve({
+                                width: img.naturalWidth,
+                                height: img.naturalHeight
+                            });
+                        };
+                        img.onerror = () => {
+                            resolve({
+                                width: 0,
+                                height: 0
+                            });
+                        };
+                        img.src = image_url;
+                    });
+                }
+            ''', image_url)
 
             height = img_dimensions['height']
             width = img_dimensions['width']

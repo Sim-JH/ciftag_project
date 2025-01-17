@@ -5,6 +5,7 @@ metadata:
   name: {{ .Release.Name }}
   annotations:
     nginx.ingress.kubernetes.io/enable-debug: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50M"
 #    {{- range $key, $value := .Values.ingress.annotations }}
 #    {{ $key }}: {{ $value | quote }}
 #    {{- end }}

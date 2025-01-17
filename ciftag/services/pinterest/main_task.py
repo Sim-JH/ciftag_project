@@ -46,8 +46,8 @@ def run(
     logs.log_data(f'--- 작업 시작 task id: {task_id}')
     update_task_status(task_id, {'task_sta': enums.TaskStatusCode.run.name})
 
-    cred_id = cred_info['cred_id']
-    cred_pw = cred_info['cred_pw']
+    cred_id = cred_info.get('cred_id')
+    cred_pw = cred_info.get('cred_pw')
     run_on = data['run_on']
     tag: str = data['tags']  # 핀터레스트는 구조 상 단일 태그
 
@@ -72,16 +72,21 @@ def run(
             context = browser.new_context()
 
         # 로그인 시도
-        result = execute_with_logging(login.login, logs, context, task_id, cred_id, cred_pw)
+        if cred_id and cred_pw:
+            result = execute_with_logging(login.login, logs, context, task_id, cred_id, cred_pw)
+            page = result['page']
 
-        if not result['result']:
-            return result
+            if not result['result']:
+                return result
+        # 로그인 없이 시도. 현재 API 기반 요청의 경우는 해당 사항 없음
+        else:
+            page = context.new_page()
 
         # 태그 기반 원본 페이지 url 크롤링
         result = execute_with_logging(
-            search.get_thumbnail_url, logs, task_id, result['page'], redis_name, tag, goal_cnt
+            search.get_thumbnail_url, logs, task_id, page, redis_name, tag, goal_cnt
         )
-
+        
         if not result['result']:
             return result
 

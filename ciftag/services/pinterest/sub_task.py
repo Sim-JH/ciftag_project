@@ -26,7 +26,7 @@ def run(
         info_id: int,
         runner_identify: str,
         data: Dict[str, Any],
-        pins: List[str],
+        pins: List[Dict[str, Any]],
         headless: bool = True
 ):
     """ 핀터레스트 크롤링 서브 타스크

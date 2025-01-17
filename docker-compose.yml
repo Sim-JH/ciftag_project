@@ -26,7 +26,7 @@ services:
         networks:
             - ciftag_network
         depends_on:
-            mq:
+            redis:
                 condition: service_healthy
             db:
                 condition: service_healthy
@@ -69,7 +69,7 @@ services:
             - ciftag_network
         command: airflow webserver
         depends_on:
-            mq:
+            redis:
                 condition: service_healthy
             db:
                 condition: service_healthy
@@ -97,7 +97,7 @@ services:
             - ciftag_network
         command: airflow scheduler
         depends_on:
-            mq:
+            redis:
                 condition: service_healthy
             db:
                 condition: service_healthy
@@ -129,13 +129,13 @@ services:
             interval: 10s
             timeout: 5s
             retries: 5
-    mq:
+    redis:
         restart: always
-        image: ciftag-mq
+        image: ciftag-redis
         build:
-            context: docker/mq
+            context: docker/redis
             dockerfile: Dockerfile
-        container_name: ciftag-mq
+        container_name: ciftag-redis
         ports:
             - 6379:6379
         env_file:
