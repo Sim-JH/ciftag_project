@@ -61,7 +61,7 @@ def run_crawler(args):
         fargate_crawl.runner(args.run_type, int(args.work_id))
 
 
-def run_consumer(args):
+def run_crawl_consumer(args):
     from ciftag.streams.crawler import (
         main_crawler,
         sub_crawler,
@@ -71,11 +71,21 @@ def run_consumer(args):
         runner = main_crawler.MainCrawlConsumer()
     elif args.consumer_type == "sub":
         runner = sub_crawler.SubCrawlConsumer(task_type=args.task_type)
-    else:
+    elif args.consumer_type == "agt":
         runner = aggregate_crawl.AggregateConsumer()
 
     runner.run()
 
+
+def run_download_consumer(args):
+    if args.consumer_type == "img":
+        from ciftag.streams.downloader import img_downloader
+        runner = img_downloader.ImgDownloadConsumer()
+    elif args.consumer_type == "filter":
+        from ciftag.streams.downloader import filter_img_by_sample
+        runner = filter_img_by_sample.SampleImgFilter()
+
+    runner.run()
 
 class CiftagParser:
     """cli args 파싱 및 해당 작업 호출"""
@@ -180,19 +190,43 @@ class CiftagParser:
         parser = argparse.ArgumentParser(
             prog="ciftag kafka", description="execute kafka consumer"
         )
+
+        parser.add_argument(
+            "operation",
+            type=str,
+            choices=['crawl', 'download'],
+            help="Specify the operation type"
+        )
+
         parser.add_argument(
             "consumer_type",
             type=str,
-            choices=['main', 'sub', 'agt'],
             help="Specify the type of the task for consumer"
         )
+
         parser.add_argument(
             "task_type",
             type=str,
             choices=['common', 'retry'],
             help="Specify the common or retry task"
         )
-        parser.set_defaults(func=run_consumer)
+
+        # Validate arguments based on operation
+        def validate_args(args):
+            if args.operation == 'crawl' and args.consumer_type not in ['main', 'sub', 'agt']:
+                parser.error("For 'crawl', consumer_type must be one of 'main', 'sub', 'agt'.")
+            elif args.operation == 'download' and args.consumer_type not in ['img', 'filter']:
+                parser.error("For 'download', consumer_type must be one of 'img', 'filter'.")
+            return args
+        
+        def select_function(args):
+            validate_args(args)
+            if args.operation == 'crawl':
+                run_crawl_consumer(args)
+            elif args.operation == 'download':
+                run_download_consumer(args)
+
+        parser.set_defaults(func=select_function)
 
         return parser
 

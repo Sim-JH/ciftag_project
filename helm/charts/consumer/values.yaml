@@ -32,6 +32,7 @@ mainConsumer:
       cpu: "500m"
       memory: "512Mi"
 
+# TODO HPA 기반 타겟 리소스 카프카 메세지? 메트릭? 현재는 메트릭 기반
 subConsumer:
   enabled: true
   minReplicas: 1
@@ -51,8 +52,7 @@ subConsumer:
 
 agtConsumer:
   enabled: true
-  minReplicas: 1
-  maxReplicas: 10
+  replicas: 3
   groupId: "agt-crawl-task-consumer-group"
   image:
     repository: ciftag-crawl-consumer
@@ -65,6 +65,40 @@ agtConsumer:
     limits:
       cpu: "1"
       memory: "1Gi"
+
+downloadConsumer:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 10
+  groupId: "img-download-task-consumer-group"
+  image:
+    repository: ciftag-crawl-consumer
+    tag: "latest"
+    pullPolicy: Never
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+
+filterConsumer:
+  enabled: true
+  replicas: 3
+  groupId: "img-sample-filter-task-consumer-group"
+  image:
+    repository: ciftag-alg-consumer
+    tag: "latest"
+    pullPolicy: Never
+  resources:
+    requests:
+      cpu: "1000m"
+      memory: "2048Mi"
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+
 
 # 아래 사항은 모듈 수정 후 필요에 따라
 volumeMounts:

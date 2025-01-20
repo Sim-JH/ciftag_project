@@ -1,43 +1,43 @@
-{{- if .Values.subConsumer.enabled }}
+{{- if .Values.agtConsumer.enabled }}
 apiVersion: apps/v1
-kind: Deployment  # TODO HPA
+kind: Deployment
 metadata:
-  name: sub-crawl-{{ .Chart.Name }}
+  name: img-sample-filter-{{ .Chart.Name }}
   namespace: {{ .Release.Namespace }}
 spec:
-  replicas: {{ .Values.subConsumer.minReplicas }}  # TODO replicas -> min/max
+  replicas: {{ .Values.filterConsumer.replicas }}
   strategy:
     type: {{ .Values.strategy.type | default "RollingUpdate" }}
   selector:
     matchLabels:
-      app: sub-crawl-{{ .Chart.Name }}
+      app: img-sample-filter-{{ .Chart.Name }}
   template:
     metadata:
       labels:
-        app: sub-crawl-{{ .Chart.Name }}
+        app: img-sample-filter-{{ .Chart.Name }}
     spec:
       # 컨테이너 구동 시 토픽 생성 (overwrite x)
       initContainers:
       - name: init-create-topics
-        image: "{{ .Values.subConsumer.image.repository }}:{{ .Values.subConsumer.image.tag }}"
-        imagePullPolicy: {{ .Values.subConsumer.image.pullPolicy }}
+        image: "{{ .Values.filterConsumer.image.repository }}:{{ .Values.filterConsumer.image.tag }}"
+        imagePullPolicy: {{ .Values.mainConsumer.image.pullPolicy }}
         command: [ "/bin/bash", "/scripts/create-topics.sh" ]
         volumeMounts:
           - name: init-scripts
             mountPath: /scripts
       containers:
-      - name: sub-crawl-{{ .Chart.Name }}
-        image: "{{ .Values.subConsumer.image.repository }}:{{ .Values.subConsumer.image.tag }}"
-        imagePullPolicy: {{ .Values.subConsumer.image.pullPolicy }}
+      - name: img-sample-filter-{{ .Chart.Name }}
+        image: "{{ .Values.filterConsumer.image.repository }}:{{ .Values.filterConsumer.image.tag }}"
+        imagePullPolicy: {{ .Values.filterConsumer.image.pullPolicy }}
         env:
         - name: KAFKA_BROKER
           value: "{{ .Values.kafka.brokerUrl }}"
         - name: CONSUMER_GROUP
-          value: "{{ .Values.subConsumer.groupId }}"
+          value: "{{ .Values.filterConsumer.groupId }}"
         {{- with .Values.env }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-        command: ["/bin/bash", "-c", "ciftag kafka crawl sub common"]
+        command: ["/bin/bash", "-c", "ciftag kafka download filter common"]
         volumeMounts:
         {{- with .Values.volumeMounts }}
         {{- toYaml . | nindent 8 }}

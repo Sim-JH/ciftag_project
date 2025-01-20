@@ -37,7 +37,7 @@ spec:
         {{- with .Values.env }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-        command: ["/bin/bash", "-c", "ciftag kafka main common"]
+        command: ["/bin/bash", "-c", "ciftag kafka crawl main common"]
         volumeMounts:
         {{- with .Values.volumeMounts }}
         {{- toYaml . | nindent 8 }}
